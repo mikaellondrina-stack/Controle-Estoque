@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Controle de Estoque</title>
+    <title>Sistema de Controle de Estoque - Corrigido</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -272,6 +275,11 @@
             color: var(--danger-color);
         }
 
+        .badge-warning {
+            background-color: #fef5e7;
+            color: var(--warning-color);
+        }
+
         .search-filter {
             display: flex;
             gap: 15px;
@@ -478,6 +486,67 @@
             background-color: var(--warning-color);
         }
 
+        .stock-status-critical {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .stock-status-low {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+
+        .stock-status-normal {
+            color: var(--success-color);
+        }
+
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .total-row td {
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+
+        .pdf-preview {
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+
+        .pdf-preview.active {
+            display: block;
+        }
+
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .pdf-logo {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .pdf-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .pdf-subtitle {
+            color: var(--gray-color);
+            font-size: 16px;
+        }
+
         footer {
             text-align: center;
             margin-top: 30px;
@@ -521,7 +590,7 @@
     <header>
         <div class="container header-content">
             <div class="logo">
-                <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" alt="Logo Porter">
+                <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" alt="Logo Porter" id="logoImage">
                 <h1>Controle de Estoque</h1>
             </div>
             <div>
@@ -745,6 +814,9 @@
                         <option value="Cozinha">Cozinha</option>
                         <option value="Higiene">Higiene</option>
                     </select>
+                    <button id="refreshStock" class="btn btn-primary" style="width: auto;">
+                        <i class="fas fa-sync-alt"></i> Atualizar
+                    </button>
                 </div>
 
                 <div class="table-container">
@@ -759,10 +831,49 @@
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Dados serão inseridos via JavaScript -->
+                        <tbody id="stockTableBody">
+                            <!-- Dados serão inseridos via recalcularEstoque() -->
                         </tbody>
+                        <tfoot id="stockTableFooter">
+                            <!-- Totais serão inseridos via recalcularEstoque() -->
+                        </tfoot>
                     </table>
+                </div>
+                
+                <div class="empty-state" id="emptyStock" style="display: none;">
+                    <i class="fas fa-box-open"></i>
+                    <h3>Nenhum produto encontrado</h3>
+                    <p>Nenhum produto corresponde aos filtros aplicados.</p>
+                </div>
+                
+                <div class="stats-cards" style="margin-top: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #3498db;">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stockTotalItems">0</h3>
+                            <p>Itens em estoque</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #27ae60;">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stockTotalValue">0</h3>
+                            <p>Valor total</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #e74c3c;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stockLowItems">0</h3>
+                            <p>Itens com estoque baixo</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -770,7 +881,7 @@
         <!-- Relatórios Mensais -->
         <div id="relatorios" class="tab-content">
             <div class="card">
-                <h2 class="card-title">Relatórios Mensais</h2>
+                <h2 class="card-title">Relatórios Mensais em PDF</h2>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -787,24 +898,55 @@
                     </div>
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <button id="generateReport" class="btn btn-primary">
-                            <i class="fas fa-chart-bar"></i> Gerar Relatório
+                        <button id="generatePdf" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> Gerar PDF
                         </button>
                     </div>
                 </div>
 
-                <div class="export-buttons admin-only" id="exportReportSection" style="display: none;">
-                    <button id="exportReport" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> Exportar Relatório para Excel
-                    </button>
-                </div>
-
-                <div id="reportContent">
-                    <div class="empty-state">
-                        <i class="fas fa-chart-pie"></i>
-                        <h3>Nenhum relatório gerado</h3>
-                        <p>Selecione um mês e ano e clique em "Gerar Relatório" para visualizar os dados.</p>
+                <div id="pdfPreview" class="pdf-preview">
+                    <div class="pdf-header">
+                        <div class="pdf-logo-container">
+                            <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" alt="Logo Porter" class="pdf-logo">
+                        </div>
+                        <h1 class="pdf-title">Relatório de Saídas de Estoque</h1>
+                        <p class="pdf-subtitle" id="pdfPeriod">Mês/Ano</p>
+                        <p class="pdf-subtitle">Gerado em: <span id="pdfGenerationDate"></span></p>
                     </div>
+                    
+                    <div class="table-container">
+                        <table id="pdfPreviewTable">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Categoria</th>
+                                    <th>Quantidade</th>
+                                    <th>Data da Última Saída</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dados serão inseridos via JavaScript -->
+                            </tbody>
+                            <tfoot id="pdfPreviewFooter">
+                                <!-- Total será inserido via JavaScript -->
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="export-buttons" style="margin-top: 20px;">
+                        <button id="downloadPdf" class="btn btn-success">
+                            <i class="fas fa-download"></i> Baixar PDF
+                        </button>
+                        <button id="printPdf" class="btn btn-primary">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="empty-state" id="emptyReport">
+                    <i class="fas fa-chart-pie"></i>
+                    <h3>Nenhum relatório gerado</h3>
+                    <p>Selecione um mês e ano e clique em "Gerar PDF" para visualizar o relatório.</p>
                 </div>
             </div>
         </div>
@@ -900,16 +1042,16 @@
         ];
 
         const produtos = [
-            { nome: "Café", categoria: "Cozinha" },
-            { nome: "Açúcar", categoria: "Cozinha" },
-            { nome: "Papel higiênico", categoria: "Higiene" },
-            { nome: "Pano", categoria: "Higiene" },
-            { nome: "Papel toalha", categoria: "Limpeza" },
-            { nome: "Filtro de café", categoria: "Cozinha" },
-            { nome: "Saco de lixo", categoria: "Limpeza" },
-            { nome: "Desinfetante", categoria: "Limpeza" },
-            { nome: "Detergente", categoria: "Limpeza" },
-            { nome: "Sabonete líquido", categoria: "Higiene" }
+            { nome: "Café", categoria: "Cozinha", valorUnitario: 25.90 },
+            { nome: "Açúcar", categoria: "Cozinha", valorUnitario: 4.50 },
+            { nome: "Papel higiênico", categoria: "Higiene", valorUnitario: 18.90 },
+            { nome: "Pano", categoria: "Higiene", valorUnitario: 22.50 },
+            { nome: "Papel toalha", categoria: "Limpeza", valorUnitario: 15.75 },
+            { nome: "Filtro de café", categoria: "Cozinha", valorUnitario: 8.90 },
+            { nome: "Saco de lixo", categoria: "Limpeza", valorUnitario: 32.40 },
+            { nome: "Desinfetante", categoria: "Limpeza", valorUnitario: 9.80 },
+            { nome: "Detergente", categoria: "Limpeza", valorUnitario: 2.90 },
+            { nome: "Sabonete líquido", categoria: "Higiene", valorUnitario: 12.50 }
         ];
 
         // Estado da aplicação
@@ -919,6 +1061,8 @@
         const itemsPerPage = 15;
         let currentSort = { column: 'data', direction: 'desc' };
         let itemToDelete = null;
+        let currentStockData = []; // Cache para dados de estoque
+        let searchDebounceTimer = null;
 
         // Elementos DOM
         const tabs = document.querySelectorAll('.tab');
@@ -933,10 +1077,12 @@
         const produtoSelect = document.getElementById('produto');
         const categoriaSelect = document.getElementById('categoria');
         const historyTableBody = document.querySelector('#historyTable tbody');
-        const stockTableBody = document.querySelector('#stockTable tbody');
+        const stockTableBody = document.getElementById('stockTableBody');
+        const stockTableFooter = document.getElementById('stockTableFooter');
         const lowStockTableBody = document.querySelector('#lowStockTable tbody');
         const emptyLowStock = document.getElementById('emptyLowStock');
         const emptyHistory = document.getElementById('emptyHistory');
+        const emptyStock = document.getElementById('emptyStock');
         const searchHistory = document.getElementById('searchHistory');
         const filterType = document.getElementById('filterType');
         const filterProductHistory = document.getElementById('filterProductHistory');
@@ -944,19 +1090,30 @@
         const clearFilters = document.getElementById('clearFilters');
         const searchStock = document.getElementById('searchStock');
         const filterCategory = document.getElementById('filterCategory');
+        const refreshStock = document.getElementById('refreshStock');
         const exportHistoryBtn = document.getElementById('exportHistory');
-        const exportReportBtn = document.getElementById('exportReport');
-        const generateReportBtn = document.getElementById('generateReport');
+        const generatePdfBtn = document.getElementById('generatePdf');
         const reportMonthSelect = document.getElementById('reportMonth');
         const reportYearSelect = document.getElementById('reportYear');
-        const reportContent = document.getElementById('reportContent');
-        const exportReportSection = document.getElementById('exportReportSection');
+        const pdfPreview = document.getElementById('pdfPreview');
+        const emptyReport = document.getElementById('emptyReport');
+        const pdfPreviewTable = document.querySelector('#pdfPreviewTable tbody');
+        const pdfPreviewFooter = document.getElementById('pdfPreviewFooter');
+        const pdfPeriod = document.getElementById('pdfPeriod');
+        const pdfGenerationDate = document.getElementById('pdfGenerationDate');
+        const downloadPdfBtn = document.getElementById('downloadPdf');
+        const printPdfBtn = document.getElementById('printPdf');
+        const stockTotalItems = document.getElementById('stockTotalItems');
+        const stockTotalValue = document.getElementById('stockTotalValue');
+        const stockLowItems = document.getElementById('stockLowItems');
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             initApp();
             updateAdminUI();
             loadDashboard();
+            // Recalcular estoque inicial
+            recalcularEstoque();
         });
 
         // Função de inicialização
@@ -978,7 +1135,6 @@
             
             // Carregar dados iniciais
             loadHistoryTable();
-            loadStockTable();
         }
 
         // Preencher select de operadores
@@ -1032,8 +1188,8 @@
 
         // Preencher anos
         function populateYears() {
-            const currentYear = new Date().getFullYear();
-            for (let year = currentYear - 2; year <= currentYear; year++) {
+            const currentYear = 2026; // Ano base conforme solicitado
+            for (let year = currentYear - 2; year <= currentYear + 2; year++) {
                 const option = document.createElement('option');
                 option.value = year;
                 option.textContent = year;
@@ -1126,9 +1282,19 @@
             filterDate.addEventListener('change', loadHistoryTable);
             clearFilters.addEventListener('click', clearHistoryFilters);
 
-            // Filtros do estoque
-            searchStock.addEventListener('input', loadStockTable);
-            filterCategory.addEventListener('change', loadStockTable);
+            // Filtros do estoque com debounce
+            searchStock.addEventListener('input', function() {
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    renderStockTable();
+                }, 300);
+            });
+            
+            filterCategory.addEventListener('change', renderStockTable);
+            refreshStock.addEventListener('click', () => {
+                recalcularEstoque();
+                showToast('Estoque atualizado!', 'success');
+            });
 
             // Ordenação de tabelas
             document.querySelectorAll('th[data-sort]').forEach(th => {
@@ -1140,8 +1306,9 @@
 
             // Exportação
             exportHistoryBtn.addEventListener('click', exportHistoryToExcel);
-            exportReportBtn.addEventListener('click', exportReportToExcel);
-            generateReportBtn.addEventListener('click', generateReport);
+            generatePdfBtn.addEventListener('click', generatePdfPreview);
+            downloadPdfBtn.addEventListener('click', generatePdfDownload);
+            printPdfBtn.addEventListener('click', printPdfPreview);
 
             // Paginação
             document.addEventListener('click', function(e) {
@@ -1173,8 +1340,8 @@
             // Atualizar dados específicos da aba
             if (tabId === 'dashboard') {
                 loadDashboard();
-            } else if (tabId === 'relatorios') {
-                // Nada a fazer aqui
+            } else if (tabId === 'estoque') {
+                renderStockTable();
             }
         }
 
@@ -1212,6 +1379,17 @@
             const quantidade = parseInt(document.getElementById('quantidade').value);
             const tipo = document.querySelector('input[name="tipo"]:checked').value;
             
+            // Validar saldo negativo para saídas
+            if (tipo === 'saida') {
+                const produtoInfo = produtos.find(p => p.nome === produto);
+                const stockInfo = currentStockData.find(item => item.produto === produto);
+                
+                if (stockInfo && stockInfo.estoque < quantidade) {
+                    showToast(`Estoque insuficiente! Disponível: ${stockInfo.estoque}`, 'error');
+                    return;
+                }
+            }
+            
             const movement = {
                 id: Date.now(),
                 data,
@@ -1236,13 +1414,198 @@
             
             // Atualizar tabelas
             loadHistoryTable();
-            loadStockTable();
+            recalcularEstoque(); // Usar a função otimizada
             loadDashboard();
             
             showToast(`Movimentação de ${tipo === 'entrada' ? 'entrada' : 'saída'} registrada com sucesso!`, 'success');
             
             // Voltar para a aba de histórico
             switchTab('historico');
+        }
+
+        /**
+         * FUNÇÃO PRINCIPAL CORRIGIDA: recalcularEstoque()
+         * Calcula o estoque atual de forma otimizada usando reduce
+         * Atualiza apenas a tabela de estoque
+         */
+        function recalcularEstoque() {
+            // Usar reduce para calcular estoque em uma única passagem
+            const stockMap = movements.reduce((acc, movement) => {
+                const { produto, tipo, quantidade } = movement;
+                
+                if (!acc[produto]) {
+                    const produtoInfo = produtos.find(p => p.nome === produto);
+                    acc[produto] = {
+                        produto,
+                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        entradas: 0,
+                        saidas: 0,
+                        estoque: 0,
+                        valorUnitario: produtoInfo ? produtoInfo.valorUnitario : 0
+                    };
+                }
+                
+                if (tipo === 'entrada') {
+                    acc[produto].entradas += quantidade;
+                    acc[produto].estoque += quantidade;
+                } else if (tipo === 'saida') {
+                    acc[produto].saidas += quantidade;
+                    acc[produto].estoque -= quantidade;
+                }
+                
+                return acc;
+            }, {});
+            
+            // Adicionar produtos que não têm movimentações ainda
+            produtos.forEach(prod => {
+                if (!stockMap[prod.nome]) {
+                    stockMap[prod.nome] = {
+                        produto: prod.nome,
+                        categoria: prod.categoria,
+                        entradas: 0,
+                        saidas: 0,
+                        estoque: 0,
+                        valorUnitario: prod.valorUnitario
+                    };
+                }
+            });
+            
+            // Converter para array e armazenar em cache
+            currentStockData = Object.values(stockMap);
+            
+            // Atualizar a tabela de estoque
+            renderStockTable();
+        }
+
+        /**
+         * Renderiza a tabela de estoque com base nos dados em cache
+         */
+        function renderStockTable() {
+            const searchTerm = searchStock.value.toLowerCase();
+            const categoryFilter = filterCategory.value;
+            
+            // Filtrar dados
+            let filteredData = [...currentStockData];
+            
+            if (searchTerm) {
+                filteredData = filteredData.filter(item => 
+                    item.produto.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (categoryFilter) {
+                filteredData = filteredData.filter(item => item.categoria === categoryFilter);
+            }
+            
+            // Ordenar dados
+            filteredData.sort((a, b) => {
+                if (currentSort.column === 'estoque') {
+                    return currentSort.direction === 'asc' ? a.estoque - b.estoque : b.estoque - a.estoque;
+                } else if (currentSort.column === 'entradas') {
+                    return currentSort.direction === 'asc' ? a.entradas - b.entradas : b.entradas - a.entradas;
+                } else if (currentSort.column === 'saidas') {
+                    return currentSort.direction === 'asc' ? a.saidas - b.saidas : b.saidas - a.saidas;
+                } else {
+                    const valueA = a[currentSort.column].toLowerCase();
+                    const valueB = b[currentSort.column].toLowerCase();
+                    return currentSort.direction === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                }
+            });
+            
+            // Atualizar tabela
+            stockTableBody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                emptyStock.style.display = 'block';
+                stockTableFooter.innerHTML = '';
+                updateStockStats(filteredData);
+                return;
+            }
+            
+            emptyStock.style.display = 'none';
+            
+            let totalEntradas = 0;
+            let totalSaidas = 0;
+            let totalEstoque = 0;
+            let totalValor = 0;
+            
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                const status = getStockStatus(item.estoque);
+                const valorTotal = item.estoque * item.valorUnitario;
+                
+                // Acumular totais
+                totalEntradas += item.entradas;
+                totalSaidas += item.saidas;
+                totalEstoque += item.estoque;
+                totalValor += valorTotal;
+                
+                row.innerHTML = `
+                    <td>${item.produto}</td>
+                    <td>
+                        <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
+                        ${item.categoria}
+                    </td>
+                    <td>${item.entradas}</td>
+                    <td>${item.saidas}</td>
+                    <td class="${status.class}">${item.estoque}</td>
+                    <td><span class="badge ${status.badgeClass}">${status.text}</span></td>
+                `;
+                stockTableBody.appendChild(row);
+            });
+            
+            // Atualizar rodapé com totais
+            stockTableFooter.innerHTML = `
+                <tr class="total-row">
+                    <td colspan="2"><strong>TOTAL GERAL</strong></td>
+                    <td><strong>${totalEntradas}</strong></td>
+                    <td><strong>${totalSaidas}</strong></td>
+                    <td><strong>${totalEstoque}</strong></td>
+                    <td><strong>${filteredData.length} produtos</strong></td>
+                </tr>
+            `;
+            
+            // Atualizar estatísticas
+            updateStockStats(filteredData);
+        }
+
+        // Função auxiliar para determinar status do estoque
+        function getStockStatus(estoque) {
+            if (estoque <= 5) {
+                return { 
+                    text: 'Crítico', 
+                    badgeClass: 'badge-danger',
+                    class: 'stock-status-critical'
+                };
+            } else if (estoque <= 15) {
+                return { 
+                    text: 'Baixo', 
+                    badgeClass: 'badge-warning',
+                    class: 'stock-status-low'
+                };
+            } else {
+                return { 
+                    text: 'Normal', 
+                    badgeClass: 'badge-success',
+                    class: 'stock-status-normal'
+                };
+            }
+        }
+
+        // Atualizar estatísticas do estoque
+        function updateStockStats(stockData) {
+            const totalItems = stockData.reduce((sum, item) => sum + item.estoque, 0);
+            const totalValue = stockData.reduce((sum, item) => {
+                const produtoInfo = produtos.find(p => p.nome === item.produto);
+                const valorUnitario = produtoInfo ? produtoInfo.valorUnitario : 0;
+                return sum + (item.estoque * valorUnitario);
+            }, 0);
+            
+            const lowItems = stockData.filter(item => item.estoque <= 15 && item.estoque > 0).length;
+            
+            stockTotalItems.textContent = totalItems;
+            stockTotalValue.textContent = `R$ ${totalValue.toFixed(2)}`;
+            stockLowItems.textContent = lowItems;
         }
 
         // Carregar tabela de histórico
@@ -1419,86 +1782,12 @@
                 icon.className = currentSort.direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
             }
             
-            loadHistoryTable();
-        }
-
-        // Carregar tabela de estoque
-        function loadStockTable() {
-            // Calcular estoque por produto
-            const stockData = {};
-            
-            produtos.forEach(prod => {
-                stockData[prod.nome] = {
-                    produto: prod.nome,
-                    categoria: prod.categoria,
-                    entradas: 0,
-                    saidas: 0,
-                    estoque: 0
-                };
-            });
-            
-            movements.forEach(movement => {
-                if (movement.tipo === 'entrada') {
-                    stockData[movement.produto].entradas += movement.quantidade;
-                    stockData[movement.produto].estoque += movement.quantidade;
-                } else {
-                    stockData[movement.produto].saidas += movement.quantidade;
-                    stockData[movement.produto].estoque -= movement.quantidade;
-                }
-            });
-            
-            // Converter para array e filtrar
-            let stockArray = Object.values(stockData);
-            
-            // Aplicar filtros
-            const searchTerm = searchStock.value.toLowerCase();
-            if (searchTerm) {
-                stockArray = stockArray.filter(item => 
-                    item.produto.toLowerCase().includes(searchTerm)
-                );
+            // Atualizar tabela apropriada
+            if (document.getElementById('estoque').classList.contains('active')) {
+                renderStockTable();
+            } else {
+                loadHistoryTable();
             }
-            
-            const categoryFilter = filterCategory.value;
-            if (categoryFilter) {
-                stockArray = stockArray.filter(item => item.categoria === categoryFilter);
-            }
-            
-            // Ordenar (simplificado para estoque)
-            stockArray.sort((a, b) => {
-                if (currentSort.column === 'estoque') {
-                    return currentSort.direction === 'asc' ? a.estoque - b.estoque : b.estoque - a.estoque;
-                } else if (currentSort.column === 'entradas') {
-                    return currentSort.direction === 'asc' ? a.entradas - b.entradas : b.entradas - a.entradas;
-                } else if (currentSort.column === 'saidas') {
-                    return currentSort.direction === 'asc' ? a.saidas - b.saidas : b.saidas - a.saidas;
-                } else {
-                    const valueA = a[currentSort.column].toLowerCase();
-                    const valueB = b[currentSort.column].toLowerCase();
-                    return currentSort.direction === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-                }
-            });
-            
-            // Atualizar tabela
-            stockTableBody.innerHTML = '';
-            
-            stockArray.forEach(item => {
-                const row = document.createElement('tr');
-                const status = item.estoque <= 10 ? 'Baixo' : item.estoque <= 30 ? 'Atenção' : 'Normal';
-                const statusClass = item.estoque <= 10 ? 'badge-danger' : item.estoque <= 30 ? 'badge-warning' : 'badge-success';
-                
-                row.innerHTML = `
-                    <td>${item.produto}</td>
-                    <td>
-                        <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
-                        ${item.categoria}
-                    </td>
-                    <td>${item.entradas}</td>
-                    <td>${item.saidas}</td>
-                    <td>${item.estoque}</td>
-                    <td><span class="badge ${statusClass}">${status}</span></td>
-                `;
-                stockTableBody.appendChild(row);
-            });
         }
 
         // Carregar dashboard
@@ -1513,45 +1802,28 @@
             let totalSaidas = 0;
             const lowStockItems = [];
             
-            // Calcular estoque por produto
-            const stockData = {};
-            
-            produtos.forEach(prod => {
-                stockData[prod.nome] = {
-                    produto: prod.nome,
-                    categoria: prod.categoria,
-                    estoque: 0
-                };
-            });
-            
-            movements.forEach(movement => {
-                // Totais gerais
-                if (movement.tipo === 'entrada') {
-                    stockData[movement.produto].estoque += movement.quantidade;
-                    
-                    // Totais do mês atual
-                    const movementDate = new Date(movement.data);
-                    if (movementDate.getMonth() + 1 === currentMonth && movementDate.getFullYear() === currentYear) {
-                        totalEntradas += movement.quantidade;
-                    }
-                } else {
-                    stockData[movement.produto].estoque -= movement.quantidade;
-                    
-                    // Totais do mês atual
-                    const movementDate = new Date(movement.data);
-                    if (movementDate.getMonth() + 1 === currentMonth && movementDate.getFullYear() === currentYear) {
-                        totalSaidas += movement.quantidade;
-                    }
-                }
-            });
-            
-            // Calcular total de produtos em estoque e identificar baixo estoque
-            Object.values(stockData).forEach(item => {
+            // Usar dados em cache para dashboard
+            currentStockData.forEach(item => {
                 if (item.estoque > 0) {
                     totalProdutos++;
                 }
                 if (item.estoque <= 10 && item.estoque > 0) {
                     lowStockItems.push(item);
+                }
+            });
+            
+            // Calcular entradas e saídas do mês atual
+            const currentMonthMovements = movements.filter(m => {
+                const movementDate = new Date(m.data);
+                return movementDate.getMonth() + 1 === currentMonth && 
+                       movementDate.getFullYear() === currentYear;
+            });
+            
+            currentMonthMovements.forEach(m => {
+                if (m.tipo === 'entrada') {
+                    totalEntradas += m.quantidade;
+                } else {
+                    totalSaidas += m.quantidade;
                 }
             });
             
@@ -1591,13 +1863,17 @@
             movements = movements.filter(m => m.id !== id);
             localStorage.setItem('stock_movements', JSON.stringify(movements));
             loadHistoryTable();
-            loadStockTable();
+            recalcularEstoque(); // Usar função otimizada
             loadDashboard();
             showToast('Movimentação excluída com sucesso!', 'success');
         }
 
-        // Gerar relatório mensal
-        function generateReport() {
+        /**
+         * GERAR RELATÓRIO EM PDF - FUNÇÕES ATUALIZADAS
+         */
+
+        // Gerar pré-visualização do PDF
+        function generatePdfPreview() {
             const month = reportMonthSelect.value;
             const year = reportYearSelect.value;
             
@@ -1606,231 +1882,273 @@
                 return;
             }
             
-            // Filtrar movimentações do mês/ano selecionado
+            // Filtrar movimentações do mês/ano selecionado (apenas saídas)
             const monthMovements = movements.filter(m => {
                 const movementDate = new Date(m.data);
                 return movementDate.getMonth() + 1 === parseInt(month) && 
-                       movementDate.getFullYear() === parseInt(year);
+                       movementDate.getFullYear() === parseInt(year) &&
+                       m.tipo === 'saida';
             });
             
             if (monthMovements.length === 0) {
-                reportContent.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-chart-pie"></i>
-                        <h3>Nenhuma movimentação no período</h3>
-                        <p>Não foram encontradas movimentações para ${getMonthName(month)}/${year}.</p>
-                    </div>
-                `;
-                exportReportSection.style.display = 'none';
+                emptyReport.style.display = 'block';
+                pdfPreview.classList.remove('active');
+                showToast('Nenhuma saída encontrada para o período selecionado', 'warning');
                 return;
             }
             
-            // Calcular totais por produto
-            const reportData = {};
-            
-            monthMovements.forEach(movement => {
-                if (!reportData[movement.produto]) {
-                    reportData[movement.produto] = {
-                        produto: movement.produto,
-                        categoria: movement.categoria,
-                        entradas: 0,
-                        saidas: 0
+            // Agrupar por produto usando reduce
+            const reportData = monthMovements.reduce((acc, movement) => {
+                const { produto, quantidade, data } = movement;
+                const produtoInfo = produtos.find(p => p.nome === produto);
+                
+                if (!acc[produto]) {
+                    acc[produto] = {
+                        produto,
+                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        quantidade: 0,
+                        ultimaData: data
                     };
                 }
                 
-                if (movement.tipo === 'entrada') {
-                    reportData[movement.produto].entradas += movement.quantidade;
-                } else {
-                    reportData[movement.produto].saidas += movement.quantidade;
+                acc[produto].quantidade += quantidade;
+                
+                // Manter a data mais recente
+                if (new Date(data) > new Date(acc[produto].ultimaData)) {
+                    acc[produto].ultimaData = data;
+                }
+                
+                return acc;
+            }, {});
+            
+            // Converter para array e ordenar por quantidade (maior para menor)
+            const reportArray = Object.values(reportData);
+            reportArray.sort((a, b) => b.quantidade - a.quantidade);
+            
+            // Calcular total
+            const totalSaidas = reportArray.reduce((sum, item) => sum + item.quantidade, 0);
+            
+            // Atualizar pré-visualização
+            pdfPreviewTable.innerHTML = '';
+            
+            reportArray.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.produto}</td>
+                    <td>
+                        <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
+                        ${item.categoria}
+                    </td>
+                    <td>${item.quantidade}</td>
+                    <td>${formatDate(item.ultimaData)}</td>
+                `;
+                pdfPreviewTable.appendChild(row);
+            });
+            
+            // Atualizar rodapé
+            pdfPreviewFooter.innerHTML = `
+                <tr class="total-row">
+                    <td colspan="2"><strong>TOTAL DE SAÍDAS</strong></td>
+                    <td><strong>${totalSaidas}</strong></td>
+                    <td><strong>${reportArray.length} produtos</strong></td>
+                </tr>
+            `;
+            
+            // Atualizar informações do relatório
+            pdfPeriod.textContent = `${getMonthName(month)} de ${year}`;
+            pdfGenerationDate.textContent = new Date().toLocaleDateString('pt-BR');
+            
+            // Mostrar pré-visualização
+            emptyReport.style.display = 'none';
+            pdfPreview.classList.add('active');
+            
+            showToast('Relatório gerado com sucesso!', 'success');
+        }
+
+        // Gerar e baixar PDF
+        function generatePdfDownload() {
+            const month = reportMonthSelect.value;
+            const year = reportYearSelect.value;
+            
+            if (!month || !year) {
+                showToast('Selecione um mês e ano primeiro', 'warning');
+                return;
+            }
+            
+            // Recriar dados do relatório
+            const monthMovements = movements.filter(m => {
+                const movementDate = new Date(m.data);
+                return movementDate.getMonth() + 1 === parseInt(month) && 
+                       movementDate.getFullYear() === parseInt(year) &&
+                       m.tipo === 'saida';
+            });
+            
+            if (monthMovements.length === 0) {
+                showToast('Nenhuma saída encontrada para o período selecionado', 'warning');
+                return;
+            }
+            
+            // Agrupar por produto
+            const reportData = monthMovements.reduce((acc, movement) => {
+                const { produto, quantidade, data } = movement;
+                const produtoInfo = produtos.find(p => p.nome === produto);
+                
+                if (!acc[produto]) {
+                    acc[produto] = {
+                        produto,
+                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        quantidade: 0,
+                        ultimaData: data
+                    };
+                }
+                
+                acc[produto].quantidade += quantidade;
+                
+                if (new Date(data) > new Date(acc[produto].ultimaData)) {
+                    acc[produto].ultimaData = data;
+                }
+                
+                return acc;
+            }, {});
+            
+            const reportArray = Object.values(reportData);
+            reportArray.sort((a, b) => b.quantidade - a.quantidade);
+            const totalSaidas = reportArray.reduce((sum, item) => sum + item.quantidade, 0);
+            
+            // Criar PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Configurações
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 20;
+            const contentWidth = pageWidth - (margin * 2);
+            
+            // Logo (imagem base64 simulada - na prática, use uma URL válida)
+            try {
+                // Tentar carregar a logo da Porter
+                doc.addImage(
+                    'https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png',
+                    'PNG',
+                    margin,
+                    15,
+                    40,
+                    15
+                );
+            } catch (e) {
+                console.log('Logo não carregada, continuando sem ela...');
+            }
+            
+            // Título
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Relatório de Saídas de Estoque', pageWidth / 2, 40, { align: 'center' });
+            
+            // Período
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${getMonthName(month)} de ${year}`, pageWidth / 2, 50, { align: 'center' });
+            
+            // Data de geração
+            doc.setFontSize(10);
+            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 60, { align: 'right' });
+            
+            // Linha separadora
+            doc.setLineWidth(0.5);
+            doc.line(margin, 65, pageWidth - margin, 65);
+            
+            // Cabeçalho da tabela
+            let yPos = 75;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            
+            // Definir larguras das colunas
+            const colWidths = [contentWidth * 0.35, contentWidth * 0.25, contentWidth * 0.20, contentWidth * 0.20];
+            
+            // Desenhar cabeçalho
+            doc.text('Produto', margin, yPos);
+            doc.text('Categoria', margin + colWidths[0], yPos);
+            doc.text('Quantidade', margin + colWidths[0] + colWidths[1], yPos);
+            doc.text('Última Saída', margin + colWidths[0] + colWidths[1] + colWidths[2], yPos);
+            
+            yPos += 8;
+            doc.setLineWidth(0.2);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 5;
+            
+            // Conteúdo da tabela
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            
+            reportArray.forEach((item, index) => {
+                // Verificar se precisa de nova página
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                    
+                    // Cabeçalho da nova página
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Relatório de Saídas de Estoque - Continuação', margin, 10);
+                    yPos = 30;
+                }
+                
+                // Linha de dados
+                doc.text(item.produto, margin, yPos);
+                doc.text(item.categoria, margin + colWidths[0], yPos);
+                doc.text(item.quantidade.toString(), margin + colWidths[0] + colWidths[1], yPos);
+                doc.text(formatDate(item.ultimaData), margin + colWidths[0] + colWidths[1] + colWidths[2], yPos);
+                
+                yPos += 8;
+                
+                // Linha separadora opcional
+                if (index < reportArray.length - 1) {
+                    doc.setLineWidth(0.1);
+                    doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
                 }
             });
             
-            // Converter para array
-            const reportArray = Object.values(reportData);
+            // Linha antes do total
+            yPos += 5;
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
             
-            // Ordenar por saídas (maior para menor)
-            reportArray.sort((a, b) => b.saidas - a.saidas);
+            // Total
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('TOTAL DE SAÍDAS:', margin, yPos);
+            doc.text(totalSaidas.toString(), margin + colWidths[0] + colWidths[1], yPos);
+            doc.text(`${reportArray.length} produtos`, margin + colWidths[0] + colWidths[1] + colWidths[2], yPos);
             
-            // Calcular total geral
-            const totalEntradas = reportArray.reduce((sum, item) => sum + item.entradas, 0);
-            const totalSaidas = reportArray.reduce((sum, item) => sum + item.saidas, 0);
+            // Rodapé
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.text('Sistema de Controle de Estoque - Porter © 2026', pageWidth / 2, 290, { align: 'center' });
             
-            // Gerar HTML do relatório
-            let reportHTML = `
-                <div class="card">
-                    <h3 class="card-title">Relatório de ${getMonthName(month)}/${year}</h3>
-                    
-                    <div class="stats-cards">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background-color: #27ae60;">
-                                <i class="fas fa-arrow-down"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>${totalEntradas}</h3>
-                                <p>Total de Entradas</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background-color: #e74c3c;">
-                                <i class="fas fa-arrow-up"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>${totalSaidas}</h3>
-                                <p>Total de Saídas</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background-color: #3498db;">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>${reportArray.length}</h3>
-                                <p>Produtos Movimentados</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h4>Detalhamento por Produto</h4>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Produto</th>
-                                    <th>Categoria</th>
-                                    <th>Entradas</th>
-                                    <th>Saídas</th>
-                                    <th>Saldo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
+            // Salvar PDF
+            doc.save(`relatorio_saidas_${getMonthName(month).toLowerCase()}_${year}.pdf`);
             
-            reportArray.forEach(item => {
-                const saldo = item.entradas - item.saidas;
-                reportHTML += `
-                    <tr>
-                        <td>${item.produto}</td>
-                        <td>
-                            <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
-                            ${item.categoria}
-                        </td>
-                        <td>${item.entradas}</td>
-                        <td>${item.saidas}</td>
-                        <td>${saldo}</td>
-                    </tr>
-                `;
-            });
-            
-            reportHTML += `
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <h4 style="margin-top: 30px;">Produtos Mais Consumidos</h4>
-                    <div class="chart-container">
-                        <canvas id="reportChart"></canvas>
-                    </div>
-                </div>
-            `;
-            
-            reportContent.innerHTML = reportHTML;
-            exportReportSection.style.display = 'block';
-            
-            // Gerar gráfico
-            generateChart(reportArray.slice(0, 5), month, year);
+            showToast('PDF gerado e baixado com sucesso!', 'success');
         }
 
-        // Gerar gráfico
-        function generateChart(topProducts, month, year) {
-            const canvas = document.getElementById('reportChart');
-            const ctx = canvas.getContext('2d');
+        // Imprimir pré-visualização
+        function printPdfPreview() {
+            if (!pdfPreview.classList.contains('active')) {
+                showToast('Gere um relatório primeiro', 'warning');
+                return;
+            }
             
-            // Definir dimensões do canvas
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 300;
+            const printContent = pdfPreview.innerHTML;
+            const originalContent = document.body.innerHTML;
             
-            // Dados para o gráfico
-            const labels = topProducts.map(p => p.produto);
-            const saidasData = topProducts.map(p => p.saidas);
-            const entradasData = topProducts.map(p => p.entradas);
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
             
-            // Cores
-            const backgroundColor = [
-                'rgba(231, 76, 60, 0.7)',
-                'rgba(52, 152, 219, 0.7)',
-                'rgba(46, 204, 113, 0.7)',
-                'rgba(155, 89, 182, 0.7)',
-                'rgba(241, 196, 15, 0.7)'
-            ];
-            
-            const borderColor = [
-                'rgb(231, 76, 60)',
-                'rgb(52, 152, 219)',
-                'rgb(46, 204, 113)',
-                'rgb(155, 89, 182)',
-                'rgb(241, 196, 15)'
-            ];
-            
-            // Criar gráfico manualmente (sem biblioteca externa)
-            const maxValue = Math.max(...saidasData);
-            const barWidth = (canvas.width - 100) / labels.length;
-            const chartHeight = 200;
-            const chartY = 250;
-            
-            // Limpar canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Desenhar eixos
-            ctx.beginPath();
-            ctx.moveTo(50, 30);
-            ctx.lineTo(50, chartY);
-            ctx.lineTo(canvas.width - 30, chartY);
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Desenhar título
-            ctx.font = '16px Arial';
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Top 5 Produtos Mais Consumidos - ${getMonthName(month)}/${year}`, canvas.width / 2, 20);
-            
-            // Desenhar barras e rótulos
-            labels.forEach((label, i) => {
-                const x = 60 + (i * barWidth);
-                const barHeight = (saidasData[i] / maxValue) * chartHeight;
-                const y = chartY - barHeight;
-                
-                // Desenhar barra
-                ctx.fillStyle = backgroundColor[i];
-                ctx.fillRect(x, y, barWidth - 10, barHeight);
-                
-                ctx.strokeStyle = borderColor[i];
-                ctx.lineWidth = 1;
-                ctx.strokeRect(x, y, barWidth - 10, barHeight);
-                
-                // Valor no topo da barra
-                ctx.font = '12px Arial';
-                ctx.fillStyle = '#333';
-                ctx.textAlign = 'center';
-                ctx.fillText(saidasData[i], x + (barWidth - 10) / 2, y - 5);
-                
-                // Rótulo do produto
-                ctx.save();
-                ctx.translate(x + (barWidth - 10) / 2, chartY + 20);
-                ctx.rotate(-Math.PI / 4);
-                ctx.textAlign = 'right';
-                ctx.fillText(shortenText(label, 10), 0, 0);
-                ctx.restore();
-            });
-            
-            // Legenda do eixo Y
-            ctx.save();
-            ctx.translate(20, chartY / 2);
-            ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'center';
-            ctx.fillText('Quantidade de Saídas', 0, 0);
-            ctx.restore();
+            // Recarregar eventos
+            setupEventListeners();
+            showToast('Página enviada para impressão', 'success');
         }
 
         // Exportar histórico para Excel
@@ -1861,83 +2179,6 @@
             document.body.removeChild(link);
             
             showToast('Histórico exportado com sucesso!', 'success');
-        }
-
-        // Exportar relatório para Excel
-        function exportReportToExcel() {
-            const month = reportMonthSelect.value;
-            const year = reportYearSelect.value;
-            
-            if (!month || !year) {
-                showToast('Gere um relatório primeiro', 'warning');
-                return;
-            }
-            
-            // Filtrar movimentações do mês/ano selecionado
-            const monthMovements = movements.filter(m => {
-                const movementDate = new Date(m.data);
-                return movementDate.getMonth() + 1 === parseInt(month) && 
-                       movementDate.getFullYear() === parseInt(year);
-            });
-            
-            if (monthMovements.length === 0) {
-                showToast('Não há dados para exportar', 'warning');
-                return;
-            }
-            
-            // Calcular totais por produto
-            const reportData = {};
-            
-            monthMovements.forEach(movement => {
-                if (!reportData[movement.produto]) {
-                    reportData[movement.produto] = {
-                        produto: movement.produto,
-                        categoria: movement.categoria,
-                        entradas: 0,
-                        saidas: 0
-                    };
-                }
-                
-                if (movement.tipo === 'entrada') {
-                    reportData[movement.produto].entradas += movement.quantidade;
-                } else {
-                    reportData[movement.produto].saidas += movement.quantidade;
-                }
-            });
-            
-            // Converter para array
-            const reportArray = Object.values(reportData);
-            
-            // Criar CSV
-            let csv = `Relatório de Estoque - ${getMonthName(month)}/${year}\n\n`;
-            csv += 'Produto,Categoria,Entradas,Saídas,Saldo\n';
-            
-            reportArray.forEach(item => {
-                const saldo = item.entradas - item.saidas;
-                csv += `${item.produto},${item.categoria},${item.entradas},${item.saidas},${saldo}\n`;
-            });
-            
-            // Totais
-            const totalEntradas = reportArray.reduce((sum, item) => sum + item.entradas, 0);
-            const totalSaidas = reportArray.reduce((sum, item) => sum + item.saidas, 0);
-            const totalSaldo = totalEntradas - totalSaidas;
-            
-            csv += `\nTOTAL GERAL,,${totalEntradas},${totalSaidas},${totalSaldo}`;
-            
-            // Criar blob e download
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `relatorio_estoque_${getMonthName(month)}_${year}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('Relatório exportado com sucesso!', 'success');
         }
 
         // Mostrar toast notification
