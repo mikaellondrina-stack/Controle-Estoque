@@ -861,8 +861,8 @@
                             <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="stat-info">
-                            <h3 id="stockTotalValue">0</h3>
-                            <p>Valor total</p>
+                            <h3 id="stockTotalEntradas">0</h3>
+                            <p>Total entradas</p>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1008,7 +1008,7 @@
     </footer>
 
     <script>
-        // Dados iniciais
+        // Dados iniciais - SEM VALORES MONETÁRIOS
         const operadores = [
             "MARIO ALEXANDRE CLEMENTIN",
             "VANIA DO SOCORRO LEOCADIO",
@@ -1042,16 +1042,16 @@
         ];
 
         const produtos = [
-            { nome: "Café", categoria: "Cozinha", valorUnitario: 25.90 },
-            { nome: "Açúcar", categoria: "Cozinha", valorUnitario: 4.50 },
-            { nome: "Papel higiênico", categoria: "Higiene", valorUnitario: 18.90 },
-            { nome: "Pano", categoria: "Higiene", valorUnitario: 22.50 },
-            { nome: "Papel toalha", categoria: "Limpeza", valorUnitario: 15.75 },
-            { nome: "Filtro de café", categoria: "Cozinha", valorUnitario: 8.90 },
-            { nome: "Saco de lixo", categoria: "Limpeza", valorUnitario: 32.40 },
-            { nome: "Desinfetante", categoria: "Limpeza", valorUnitario: 9.80 },
-            { nome: "Detergente", categoria: "Limpeza", valorUnitario: 2.90 },
-            { nome: "Sabonete líquido", categoria: "Higiene", valorUnitario: 12.50 }
+            { nome: "Café", categoria: "Cozinha" },
+            { nome: "Açúcar", categoria: "Cozinha" },
+            { nome: "Papel higiênico", categoria: "Higiene" },
+            { nome: "Papel higiênico masculino", categoria: "Higiene" },
+            { nome: "Papel toalha", categoria: "Limpeza" },
+            { nome: "Filtro de café", categoria: "Cozinha" },
+            { nome: "Saco de lixo", categoria: "Limpeza" },
+            { nome: "Desinfetante", categoria: "Limpeza" },
+            { nome: "Detergente", categoria: "Limpeza" },
+            { nome: "Sabonete líquido", categoria: "Higiene" }
         ];
 
         // Estado da aplicação
@@ -1104,7 +1104,7 @@
         const downloadPdfBtn = document.getElementById('downloadPdf');
         const printPdfBtn = document.getElementById('printPdf');
         const stockTotalItems = document.getElementById('stockTotalItems');
-        const stockTotalValue = document.getElementById('stockTotalValue');
+        const stockTotalEntradas = document.getElementById('stockTotalEntradas');
         const stockLowItems = document.getElementById('stockLowItems');
 
         // Inicialização
@@ -1381,7 +1381,6 @@
             
             // Validar saldo negativo para saídas
             if (tipo === 'saida') {
-                const produtoInfo = produtos.find(p => p.nome === produto);
                 const stockInfo = currentStockData.find(item => item.produto === produto);
                 
                 if (stockInfo && stockInfo.estoque < quantidade) {
@@ -1431,17 +1430,15 @@
         function recalcularEstoque() {
             // Usar reduce para calcular estoque em uma única passagem
             const stockMap = movements.reduce((acc, movement) => {
-                const { produto, tipo, quantidade } = movement;
+                const { produto, tipo, quantidade, categoria } = movement;
                 
                 if (!acc[produto]) {
-                    const produtoInfo = produtos.find(p => p.nome === produto);
                     acc[produto] = {
                         produto,
-                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        categoria: categoria,
                         entradas: 0,
                         saidas: 0,
-                        estoque: 0,
-                        valorUnitario: produtoInfo ? produtoInfo.valorUnitario : 0
+                        estoque: 0
                     };
                 }
                 
@@ -1464,8 +1461,7 @@
                         categoria: prod.categoria,
                         entradas: 0,
                         saidas: 0,
-                        estoque: 0,
-                        valorUnitario: prod.valorUnitario
+                        estoque: 0
                     };
                 }
             });
@@ -1527,18 +1523,15 @@
             let totalEntradas = 0;
             let totalSaidas = 0;
             let totalEstoque = 0;
-            let totalValor = 0;
             
             filteredData.forEach(item => {
                 const row = document.createElement('tr');
                 const status = getStockStatus(item.estoque);
-                const valorTotal = item.estoque * item.valorUnitario;
                 
                 // Acumular totais
                 totalEntradas += item.entradas;
                 totalSaidas += item.saidas;
                 totalEstoque += item.estoque;
-                totalValor += valorTotal;
                 
                 row.innerHTML = `
                     <td>${item.produto}</td>
@@ -1595,16 +1588,11 @@
         // Atualizar estatísticas do estoque
         function updateStockStats(stockData) {
             const totalItems = stockData.reduce((sum, item) => sum + item.estoque, 0);
-            const totalValue = stockData.reduce((sum, item) => {
-                const produtoInfo = produtos.find(p => p.nome === item.produto);
-                const valorUnitario = produtoInfo ? produtoInfo.valorUnitario : 0;
-                return sum + (item.estoque * valorUnitario);
-            }, 0);
-            
+            const totalEntradas = stockData.reduce((sum, item) => sum + item.entradas, 0);
             const lowItems = stockData.filter(item => item.estoque <= 15 && item.estoque > 0).length;
             
             stockTotalItems.textContent = totalItems;
-            stockTotalValue.textContent = `R$ ${totalValue.toFixed(2)}`;
+            stockTotalEntradas.textContent = totalEntradas;
             stockLowItems.textContent = lowItems;
         }
 
@@ -1899,13 +1887,12 @@
             
             // Agrupar por produto usando reduce
             const reportData = monthMovements.reduce((acc, movement) => {
-                const { produto, quantidade, data } = movement;
-                const produtoInfo = produtos.find(p => p.nome === produto);
+                const { produto, quantidade, data, categoria } = movement;
                 
                 if (!acc[produto]) {
                     acc[produto] = {
                         produto,
-                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        categoria: categoria,
                         quantidade: 0,
                         ultimaData: data
                     };
@@ -1990,13 +1977,12 @@
             
             // Agrupar por produto
             const reportData = monthMovements.reduce((acc, movement) => {
-                const { produto, quantidade, data } = movement;
-                const produtoInfo = produtos.find(p => p.nome === produto);
+                const { produto, quantidade, data, categoria } = movement;
                 
                 if (!acc[produto]) {
                     acc[produto] = {
                         produto,
-                        categoria: produtoInfo ? produtoInfo.categoria : 'Desconhecida',
+                        categoria: categoria,
                         quantidade: 0,
                         ultimaData: data
                     };
