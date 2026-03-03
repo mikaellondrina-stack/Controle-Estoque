@@ -48,7 +48,6 @@
             padding: 0 20px;
         }
 
-        /* Loading */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -79,7 +78,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Login */
         .login-screen {
             min-height: 100vh;
             display: flex;
@@ -108,7 +106,6 @@
             margin-bottom: 20px;
         }
 
-        /* Header */
         header {
             background: white;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -154,7 +151,6 @@
             font-weight: 600;
         }
 
-        /* Tabs */
         .nav-tabs {
             display: flex;
             background: white;
@@ -203,7 +199,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Cards */
         .card {
             background: white;
             border-radius: 12px;
@@ -222,7 +217,6 @@
             align-items: center;
         }
 
-        /* Forms */
         .form-group {
             margin-bottom: 20px;
         }
@@ -255,7 +249,6 @@
             box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
         }
 
-        /* Buttons */
         .btn {
             padding: 12px 25px;
             border: none;
@@ -270,16 +263,15 @@
         }
 
         .btn-primary { background: var(--secondary); color: white; }
-        .btn-primary:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn-primary:hover { background: #2980b9; }
         .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #229954; transform: translateY(-2px); }
+        .btn-success:hover { background: #229954; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: #c0392b; transform: translateY(-2px); }
+        .btn-danger:hover { background: #c0392b; }
         .btn-warning { background: var(--warning); color: white; }
-        .btn-warning:hover { background: #d68910; transform: translateY(-2px); }
+        .btn-warning:hover { background: #d68910; }
         .btn-sm { padding: 8px 15px; font-size: 0.9rem; }
 
-        /* Tables */
         .table-container {
             overflow-x: auto;
             border-radius: 8px;
@@ -308,7 +300,6 @@
             background: #f9f9f9;
         }
 
-        /* Badges */
         .badge {
             padding: 4px 10px;
             border-radius: 20px;
@@ -320,7 +311,6 @@
         .badge-danger { background: #fadbd8; color: var(--danger); }
         .badge-warning { background: #fef5e7; color: var(--warning); }
 
-        /* Stats */
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -358,7 +348,6 @@
             color: var(--gray);
         }
 
-        /* Search */
         .search-filter {
             display: flex;
             gap: 15px;
@@ -372,7 +361,6 @@
             min-width: 200px;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 40px;
@@ -385,7 +373,6 @@
             color: #ddd;
         }
 
-        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
@@ -407,7 +394,6 @@
             border-color: var(--secondary);
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -466,7 +452,6 @@
             margin-top: 20px;
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -494,7 +479,6 @@
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); }
 
-        /* PDF Preview */
         .pdf-preview {
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -530,7 +514,6 @@
             color: var(--gray);
         }
 
-        /* Status */
         .stock-critical { color: var(--danger); font-weight: bold; }
         .stock-low { color: var(--warning); font-weight: bold; }
         .stock-normal { color: var(--success); }
@@ -557,7 +540,6 @@
         .category-cozinha { background: #e74c3c; }
         .category-higiene { background: #9b59b6; }
 
-        /* Connection */
         .connection-status {
             display: inline-flex;
             align-items: center;
@@ -570,7 +552,6 @@
         .connection-status.online { color: var(--success); }
         .connection-status.offline { color: var(--danger); }
 
-        /* Footer */
         footer {
             text-align: center;
             margin-top: 30px;
@@ -609,6 +590,7 @@
         <div id="loadingScreen" class="loading-screen">
             <div class="loader"></div>
             <p>Carregando sistema...</p>
+            <p style="font-size: 12px; margin-top: 10px;">Aguarde...</p>
         </div>
 
         <!-- Login Screen -->
@@ -638,6 +620,7 @@
                 
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--gray);">
                     <p>Admin: admin@porter.com.br / admin123</p>
+                    <p>Modo offline disponível</p>
                 </div>
             </div>
         </div>
@@ -745,18 +728,6 @@
                 appId: "1:48491952679:web:22d3702f089e8584abac02"
             };
 
-            // Inicializar Firebase
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            
-            // Habilitar persistência offline
-            db.enablePersistence().catch(err => {
-                if (err.code === 'failed-precondition') {
-                    console.log('Múltiplas abas abertas');
-                }
-            });
-
             // ==================== DADOS INICIAIS ====================
             const operadores = [
                 "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
@@ -798,8 +769,8 @@
                 currentSort: { column: 'data', direction: 'desc' },
                 itemToDelete: null,
                 showConfirmModal: false,
+                firebaseReady: false,
                 
-                // Filtros
                 searchHistory: '',
                 filterType: '',
                 filterProduct: '',
@@ -807,13 +778,11 @@
                 searchStock: '',
                 filterCategory: '',
                 
-                // Relatórios
                 reportMonth: (new Date().getMonth() + 1).toString().padStart(2, '0'),
                 reportYear: new Date().getFullYear().toString(),
                 showPdfPreview: false,
                 pdfData: [],
                 
-                // Form
                 formData: {
                     data: new Date().toISOString().split('T')[0],
                     hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
@@ -853,13 +822,17 @@
             }
 
             function formatDate(dateStr) {
-                return new Date(dateStr).toLocaleDateString('pt-BR');
+                try {
+                    return new Date(dateStr).toLocaleDateString('pt-BR');
+                } catch {
+                    return dateStr;
+                }
             }
 
             function getMonthName(month) {
                 const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-                return months[parseInt(month)-1];
+                return months[parseInt(month)-1] || month;
             }
 
             function getStockStatus(estoque) {
@@ -868,147 +841,48 @@
                 return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
             }
 
-            // ==================== FIREBASE AUTH ====================
-            auth.onAuthStateChanged(async (user) => {
-                loadingScreen.style.display = 'none';
-                
-                if (user) {
-                    state.user = user;
-                    userEmail.textContent = user.email;
-                    
-                    // Buscar perfil do Firestore
-                    const profileDoc = await db.collection('usuarios').doc(user.uid).get();
-                    if (profileDoc.exists) {
-                        state.userProfile = profileDoc.data();
-                        state.isAdmin = profileDoc.data().perfil === 'admin';
-                    } else {
-                        // Criar perfil padrão
-                        const defaultProfile = {
-                            nome: user.email.split('@')[0],
-                            email: user.email,
-                            perfil: 'usuario',
-                            criadoEm: new Date().toISOString()
-                        };
-                        await db.collection('usuarios').doc(user.uid).set(defaultProfile);
-                        state.userProfile = defaultProfile;
-                        state.isAdmin = false;
+            // ==================== CARREGAR DO LOCALSTORAGE ====================
+            function loadFromLocalStorage() {
+                const saved = localStorage.getItem('controle_estoque');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        state.movements = data.movements || [];
+                        state.produtos = data.produtos || produtosIniciais;
+                    } catch (e) {
+                        console.error('Erro ao carregar localStorage', e);
                     }
-                    
-                    userProfile.textContent = state.isAdmin ? 'admin' : 'usuario';
-                    
-                    // Mostrar elementos de admin
-                    document.querySelectorAll('.admin-only').forEach(el => {
-                        el.style.display = state.isAdmin ? 'block' : 'none';
-                    });
-                    
-                    loginScreen.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    
-                    // Carregar dados
-                    await loadInitialData();
-                    renderCurrentTab();
-                } else {
-                    loginScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
                 }
-            });
-
-            // ==================== LOGIN ====================
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
                 
-                try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                } catch (error) {
-                    showToast('Erro ao fazer login: ' + error.message, 'error');
-                }
-            });
-
-            // ==================== LOGOUT ====================
-            logoutBtn.addEventListener('click', () => {
-                auth.signOut();
-            });
-
-            // ==================== CONEXÃO ====================
-            firebase.firestore().enableNetwork().then(() => {
-                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Conectado';
-                connectionStatus.className = 'connection-status online';
-            }).catch(() => {
-                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Offline';
-                connectionStatus.className = 'connection-status offline';
-            });
-
-            // ==================== CARREGAR DADOS INICIAIS ====================
-            async function loadInitialData() {
-                // Carregar movimentações
-                const movSnapshot = await db.collection('movimentacoes')
-                    .orderBy('data', 'desc')
-                    .orderBy('hora', 'desc')
-                    .get();
-                
-                state.movements = movSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                // Se não houver dados, criar dados iniciais
                 if (state.movements.length === 0) {
-                    await createInitialData();
+                    // Dados iniciais
+                    state.movements = [
+                        { id: '1', data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
+                        { id: '2', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                        { id: '3', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                        { id: '4', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                        { id: '5', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
+                        { id: '6', data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
+                        { id: '7', data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
+                        { id: '8', data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
+                        { id: '9', data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
+                        { id: '10', data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
+                        { id: '11', data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                        { id: '12', data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
+                        { id: '13', data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
+                    ];
                 }
-
-                // Carregar produtos
-                const prodSnapshot = await db.collection('produtos').get();
-                state.produtos = prodSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
+                
+                state.produtos = produtosIniciais;
                 recalcularEstoque();
+                saveToLocalStorage();
             }
 
-            async function createInitialData() {
-                const batch = db.batch();
-
-                // Criar produtos
-                produtosIniciais.forEach(prod => {
-                    const prodRef = db.collection('produtos').doc();
-                    batch.set(prodRef, {
-                        ...prod,
-                        ativo: true,
-                        criadoEm: new Date().toISOString()
-                    });
-                });
-
-                // Criar movimentações iniciais
-                const movs = [
-                    { data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
-                    { data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                    { data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
-                    { data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
-                    { data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
-                    { data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
-                    { data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
-                    { data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
-                    { data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                    { data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
-                    { data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
-                ];
-
-                movs.forEach(mov => {
-                    const movRef = db.collection('movimentacoes').doc();
-                    batch.set(movRef, {
-                        ...mov,
-                        timestamp: new Date().toISOString(),
-                        criadoPor: state.user?.uid
-                    });
-                });
-
-                await batch.commit();
-                showToast('Dados iniciais criados com sucesso!');
+            function saveToLocalStorage() {
+                localStorage.setItem('controle_estoque', JSON.stringify({
+                    movements: state.movements,
+                    produtos: state.produtos
+                }));
             }
 
             // ==================== RECALCULAR ESTOQUE ====================
@@ -1050,6 +924,59 @@
                 state.currentStock = Object.values(stockMap);
             }
 
+            // ==================== INICIALIZAÇÃO ====================
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                loginScreen.style.display = 'flex';
+                
+                loadFromLocalStorage();
+                
+                // Tenta conectar Firebase, mas não trava
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    state.firebaseReady = true;
+                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
+                } catch (e) {
+                    console.log('Modo offline');
+                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Modo offline';
+                }
+            }, 1000);
+
+            // ==================== LOGIN ====================
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (email === 'admin@porter.com.br' && password === 'admin123') {
+                    state.user = { email: 'admin@porter.com.br' };
+                    state.isAdmin = true;
+                    userEmail.textContent = 'admin@porter.com.br';
+                    userProfile.textContent = 'admin';
+                    
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    
+                    loginScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    
+                    renderCurrentTab();
+                    showToast('Login realizado!');
+                } else {
+                    showToast('E-mail ou senha inválidos', 'error');
+                }
+            });
+
+            // ==================== LOGOUT ====================
+            logoutBtn.addEventListener('click', () => {
+                state.user = null;
+                state.isAdmin = false;
+                mainApp.style.display = 'none';
+                loginScreen.style.display = 'flex';
+                document.getElementById('loginForm').reset();
+            });
+
             // ==================== RENDERIZAÇÃO ====================
             function renderCurrentTab() {
                 switch(state.activeTab) {
@@ -1058,7 +985,6 @@
                     case 'historico': renderHistorico(); break;
                     case 'estoque': renderEstoque(); break;
                     case 'relatorios': renderRelatorios(); break;
-                    case 'admin': renderAdmin(); break;
                 }
             }
 
@@ -1068,13 +994,17 @@
                 
                 const totalProdutos = state.currentStock.filter(p => p.estoque > 0).length;
                 const totalEntradas = state.movements.filter(m => {
-                    const date = new Date(m.data);
-                    return date.getMonth() === new Date().getMonth() && m.tipo === 'entrada';
+                    try {
+                        const date = new Date(m.data);
+                        return date.getMonth() === new Date().getMonth() && m.tipo === 'entrada';
+                    } catch { return false; }
                 }).reduce((acc, m) => acc + m.quantidade, 0);
                 
                 const totalSaidas = state.movements.filter(m => {
-                    const date = new Date(m.data);
-                    return date.getMonth() === new Date().getMonth() && m.tipo === 'saida';
+                    try {
+                        const date = new Date(m.data);
+                        return date.getMonth() === new Date().getMonth() && m.tipo === 'saida';
+                    } catch { return false; }
                 }).reduce((acc, m) => acc + m.quantidade, 0);
                 
                 const lowStockItems = state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
@@ -1226,7 +1156,6 @@
                     </div>
                 `;
 
-                // Eventos do formulário
                 document.getElementById('movementForm').addEventListener('submit', handleSaveMovement);
                 document.getElementById('clearForm').addEventListener('click', () => {
                     document.getElementById('movData').value = new Date().toISOString().split('T')[0];
@@ -1243,22 +1172,20 @@
                 });
             }
 
-            async function handleSaveMovement(e) {
+            function handleSaveMovement(e) {
                 e.preventDefault();
                 
                 const movimento = {
+                    id: Date.now().toString(),
                     data: document.getElementById('movData').value,
                     hora: document.getElementById('movHora').value,
                     operador: document.getElementById('movOperador').value,
                     produto: document.getElementById('movProduto').value,
                     categoria: document.getElementById('movCategoria').value,
                     quantidade: parseInt(document.getElementById('movQuantidade').value),
-                    tipo: document.querySelector('input[name="tipo"]:checked').value,
-                    timestamp: new Date().toISOString(),
-                    criadoPor: state.user?.uid
+                    tipo: document.querySelector('input[name="tipo"]:checked').value
                 };
 
-                // Validar estoque para saídas
                 if (movimento.tipo === 'saida') {
                     const stockInfo = state.currentStock.find(item => item.produto === movimento.produto);
                     if (stockInfo && stockInfo.estoque < movimento.quantidade) {
@@ -1267,26 +1194,18 @@
                     }
                 }
 
-                try {
-                    const docRef = await db.collection('movimentacoes').add(movimento);
-                    movimento.id = docRef.id;
-                    
-                    state.movements.unshift(movimento);
-                    recalcularEstoque();
-                    
-                    showToast('Movimentação registrada com sucesso!');
-                    
-                    // Reset form
-                    document.getElementById('movData').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
-                    document.getElementById('movProduto').value = '';
-                    document.getElementById('movQuantidade').value = '1';
-                    
-                    // Mudar para histórico
-                    switchTab('historico');
-                } catch (error) {
-                    showToast('Erro ao salvar: ' + error.message, 'error');
-                }
+                state.movements.unshift(movimento);
+                saveToLocalStorage();
+                recalcularEstoque();
+                
+                showToast('Movimentação registrada!');
+                
+                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
+                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
+                document.getElementById('movProduto').value = '';
+                document.getElementById('movQuantidade').value = '1';
+                
+                switchTab('historico');
             }
 
             // ==================== HISTÓRICO ====================
@@ -1409,7 +1328,6 @@
                     </div>
                 `;
 
-                // Event listeners
                 document.getElementById('searchHistory')?.addEventListener('input', (e) => {
                     state.searchHistory = e.target.value;
                     state.currentPage = 1;
@@ -1445,17 +1363,13 @@
 
                 document.querySelectorAll('.delete-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        state.itemToDelete = e.currentTarget.getAttribute('data-id');
-                        showConfirmModal('Excluir movimentação?', async () => {
-                            try {
-                                await db.collection('movimentacoes').doc(state.itemToDelete).delete();
-                                state.movements = state.movements.filter(m => m.id !== state.itemToDelete);
-                                recalcularEstoque();
-                                renderHistorico();
-                                showToast('Movimentação excluída!');
-                            } catch (error) {
-                                showToast('Erro ao excluir', 'error');
-                            }
+                        const id = e.currentTarget.getAttribute('data-id');
+                        showConfirmModal('Excluir movimentação?', () => {
+                            state.movements = state.movements.filter(m => m.id !== id);
+                            saveToLocalStorage();
+                            recalcularEstoque();
+                            renderHistorico();
+                            showToast('Movimentação excluída!');
                         });
                     });
                 });
@@ -1717,10 +1631,12 @@
                 state.reportYear = year;
                 
                 const monthMovements = state.movements.filter(m => {
-                    const date = new Date(m.data);
-                    return date.getMonth() + 1 === parseInt(month) && 
-                           date.getFullYear() === parseInt(year) &&
-                           m.tipo === 'saida';
+                    try {
+                        const date = new Date(m.data);
+                        return date.getMonth() + 1 === parseInt(month) && 
+                               date.getFullYear() === parseInt(year) &&
+                               m.tipo === 'saida';
+                    } catch { return false; }
                 });
 
                 if (monthMovements.length === 0) {
@@ -1764,6 +1680,10 @@
                 
                 let y = 50;
                 state.pdfData.forEach(item => {
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
                     doc.text(item.produto, 20, y);
                     doc.text(item.categoria, 80, y);
                     doc.text(item.quantidade.toString(), 140, y);
@@ -1772,17 +1692,7 @@
                 });
                 
                 doc.save(`relatorio_${state.reportMonth}_${state.reportYear}.pdf`);
-            }
-
-            // ==================== ADMIN ====================
-            function renderAdmin() {
-                const admin = document.getElementById('admin');
-                admin.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Administração</h2>
-                        <p>Área restrita para administradores.</p>
-                    </div>
-                `;
+                showToast('PDF gerado!');
             }
 
             // ==================== MODAL ====================
