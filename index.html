@@ -855,44 +855,21 @@
                 }
                 
                 if (state.movements.length === 0) {
-                    // Dados iniciais com entradas e saídas fornecidas
+                    // Dados iniciais
                     state.movements = [
-                        // ENTRADAS (4 papel higiênico, 1 café, 8 papel toalha, 1 sabonete 5L, 1 desinfetante 5L)
-                        { id: '1001', data: '2026-03-01', hora: '08:00', operador: 'ADMIN', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'entrada' },
-                        { id: '1002', data: '2026-03-01', hora: '08:00', operador: 'ADMIN', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                        { id: '1003', data: '2026-03-01', hora: '08:00', operador: 'ADMIN', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 8, tipo: 'entrada' },
-                        { id: '1004', data: '2026-03-01', hora: '08:00', operador: 'ADMIN', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                        { id: '1005', data: '2026-03-01', hora: '08:00', operador: 'ADMIN', produto: 'Desinfetante', categoria: 'Limpeza', quantidade: 1, tipo: 'entrada' },
-
-                        // SAÍDAS
-                        { id: '1', data: '2026-03-04', hora: '15:00', operador: 'MARISA MENEGHETTI', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                        { id: '2', data: '2026-03-04', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                        { id: '3', data: '2026-03-04', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '4', data: '2026-03-04', hora: '21:35', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                        { id: '5', data: '2026-03-05', hora: '06:03', operador: 'MIKAEL – INSTRUTOR', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '6', data: '2026-03-05', hora: '13:17', operador: 'CARLOS HENRIQUE FERREIRA LEITE', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '7', data: '2026-03-05', hora: '13:20', operador: 'CARLOS HENRIQUE FERREIRA LEITE', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                        { id: '8', data: '2026-03-05', hora: '14:30', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 3, tipo: 'saida' },
-                        { id: '9', data: '2026-03-06', hora: '10:51', operador: 'CARLOS HENRIQUE FERREIRA LEITE', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                        { id: '10', data: '2026-03-06', hora: '18:15', operador: 'ANA BEATRIZ PEREIRA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '11', data: '2026-03-06', hora: '18:59', operador: 'ANA BEATRIZ PEREIRA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '12', data: '2026-03-07', hora: '05:22', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '13', data: '2026-03-07', hora: '07:00', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '14', data: '2026-03-07', hora: '13:12', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 2, tipo: 'saida' },
-                        { id: '15', data: '2026-03-07', hora: '14:40', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '16', data: '2026-03-07', hora: '16:27', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '17', data: '2026-03-08', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                        { id: '18', data: '2026-03-08', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                        { id: '19', data: '2026-03-08', hora: '10:30', operador: 'MARIA GABRIELA ANTONIO', produto: 'Detergente', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '20', data: '2026-03-08', hora: '14:55', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        { id: '21', data: '2026-03-08', hora: '15:01', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 3, tipo: 'saida' },
-                        { id: '22', data: '2026-03-08', hora: '21:00', operador: 'LUCAS VINICIUS DA SILVA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                        
-                        // Outros dados de exemplo (opcionais)
-                        { id: '23', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                        { id: '24', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                        { id: '25', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                        { id: '26', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' }
+                        { id: '1', data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
+                        { id: '2', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                        { id: '3', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                        { id: '4', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                        { id: '5', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
+                        { id: '6', data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
+                        { id: '7', data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
+                        { id: '8', data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
+                        { id: '9', data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
+                        { id: '10', data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
+                        { id: '11', data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                        { id: '12', data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
+                        { id: '13', data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
                     ];
                 }
                 
@@ -1255,9 +1232,6 @@
                 if (state.filterDate) {
                     filtered = filtered.filter(m => m.data === state.filterDate);
                 }
-
-                // Ordenar por data (mais recente primeiro)
-                filtered.sort((a, b) => new Date(b.data) - new Date(a.data));
 
                 const totalPages = Math.ceil(filtered.length / state.itemsPerPage);
                 const start = (state.currentPage - 1) * state.itemsPerPage;
