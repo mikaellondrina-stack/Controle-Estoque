@@ -632,7 +632,7 @@
         <div id="loadingScreen" class="loading-screen">
             <div class="loader"></div>
             <p>Carregando sistema...</p>
-            <p style="font-size: 12px; margin-top: 10px;">Conectando ao Firebase...</p>
+            <p style="font-size: 12px; margin-top: 10px;" id="loadingMessage">Inicializando...</p>
         </div>
 
         <!-- Login Screen -->
@@ -663,6 +663,7 @@
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--gray);">
                     <p>Admin: admin@porter.com.br / admin123</p>
                     <p>Usuário: user@porter.com.br / user123</p>
+                    <p id="firebaseStatus">Conectando ao Firebase...</p>
                 </div>
             </div>
         </div>
@@ -679,7 +680,7 @@
                         <span id="userEmail"></span>
                         <span id="userProfile" class="profile-badge">usuario</span>
                         <span id="connectionStatus" class="connection-status online">
-                            <i class="fas fa-circle"></i> Online
+                            <i class="fas fa-circle"></i> Conectado
                         </span>
                         <button id="logoutBtn" class="btn btn-danger btn-sm">
                             <i class="fas fa-sign-out-alt"></i> Sair
@@ -732,7 +733,7 @@
             <footer>
                 <div class="container">
                     <p>Sistema de Controle de Estoque Porter © 2026</p>
-                    <p><i class="fas fa-database"></i> Dados sincronizados em tempo real</p>
+                    <p><i class="fas fa-database"></i> Modo: <span id="modeStatus">Carregando...</span></p>
                 </div>
             </footer>
         </div>
@@ -809,6 +810,7 @@
                 activeTab: 'dashboard',
                 currentPage: 1,
                 itemsPerPage: 15,
+                firebaseAvailable: false,
                 
                 // Filtros
                 searchHistory: '',
@@ -832,15 +834,12 @@
                     categoria: 'Limpeza',
                     quantidade: 1,
                     tipo: 'entrada'
-                },
-                
-                // Listeners do Firebase
-                movementsUnsubscribe: null,
-                produtosUnsubscribe: null
+                }
             };
 
             // ==================== ELEMENTOS DOM ====================
             const loadingScreen = document.getElementById('loadingScreen');
+            const loadingMessage = document.getElementById('loadingMessage');
             const loginScreen = document.getElementById('loginScreen');
             const mainApp = document.getElementById('mainApp');
             const tabs = document.querySelectorAll('.tab');
@@ -855,6 +854,8 @@
             const userEmail = document.getElementById('userEmail');
             const userProfile = document.getElementById('userProfile');
             const connectionStatus = document.getElementById('connectionStatus');
+            const modeStatus = document.getElementById('modeStatus');
+            const firebaseStatus = document.getElementById('firebaseStatus');
 
             // ==================== FUNÇÕES AUXILIARES ====================
             function showToast(msg, type = 'success') {
@@ -886,178 +887,56 @@
                 return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
             }
 
-            // ==================== INICIALIZAÇÃO FIREBASE ====================
-            let db;
-            
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                
-                // Configurar para funcionar offline quando necessário
-                db.enablePersistence()
-                    .catch((err) => {
-                        if (err.code == 'failed-precondition') {
-                            console.log('Persistência offline falhou - múltiplas abas abertas');
-                        } else if (err.code == 'unimplemented') {
-                            console.log('Navegador não suporta persistência offline');
-                        }
-                    });
-                
-                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase Conectado';
-                connectionStatus.className = 'connection-status online';
-            } catch (e) {
-                console.error('Erro ao conectar Firebase:', e);
-                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Erro de conexão';
-                connectionStatus.className = 'connection-status offline';
-            }
-
-            // ==================== INICIALIZAR DADOS INICIAIS ====================
-            async function initializeFirebaseData() {
-                try {
-                    // Verificar se já existem produtos
-                    const produtosSnapshot = await db.collection('produtos').get();
-                    
-                    if (produtosSnapshot.empty) {
-                        console.log('Inicializando produtos no Firebase...');
-                        
-                        // Criar produtos iniciais
-                        const batch = db.batch();
-                        produtosIniciais.forEach(produto => {
-                            const docRef = db.collection('produtos').doc();
-                            batch.set(docRef, {
-                                ...produto,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                        
-                        await batch.commit();
-                        
-                        // Criar movimentações iniciais
-                        const movimentacoesBatch = db.batch();
-                        const movimentacoesIniciais = [
-                            { data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
-                            { data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                            { data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                            { data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                            { data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
-                            { data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
-                            { data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
-                            { data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
-                            { data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
-                            { data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
-                            { data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                            { data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
-                            { data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
-                        ];
-                        
-                        movimentacoesIniciais.forEach(mov => {
-                            const docRef = db.collection('movimentacoes').doc();
-                            movimentacoesBatch.set(docRef, {
-                                ...mov,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                        
-                        await movimentacoesBatch.commit();
-                        console.log('Dados iniciais criados com sucesso!');
+            // ==================== DADOS LOCAIS (FALLBACK) ====================
+            function loadLocalData() {
+                const saved = localStorage.getItem('controle_estoque_offline');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        state.movements = data.movements || [];
+                        state.produtos = data.produtos || produtosIniciais;
+                    } catch (e) {
+                        console.error('Erro ao carregar dados locais:', e);
+                        useInitialData();
                     }
-                } catch (error) {
-                    console.error('Erro ao inicializar dados:', error);
-                }
-            }
-
-            // ==================== LISTENERS EM TEMPO REAL ====================
-            
-            // Listener para produtos
-            function subscribeToProdutos() {
-                if (state.produtosUnsubscribe) {
-                    state.produtosUnsubscribe();
+                } else {
+                    useInitialData();
                 }
                 
-                state.produtosUnsubscribe = db.collection('produtos')
-                    .onSnapshot((snapshot) => {
-                        state.produtos = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        
-                        console.log('Produtos atualizados:', state.produtos.length);
-                        
-                        // Recalcular estoque quando produtos mudam
-                        if (state.movements.length > 0) {
-                            recalcularEstoque();
-                        }
-                        
-                        // Atualizar interface se necessário
-                        if (state.activeTab === 'estoque') {
-                            renderEstoque();
-                        } else if (state.activeTab === 'dashboard') {
-                            renderDashboard();
-                        } else if (state.activeTab === 'relatorios' && state.reportType === 'estoque') {
-                            generateStockReport();
-                        }
-                    }, (error) => {
-                        console.error('Erro no listener de produtos:', error);
-                        showToast('Erro ao sincronizar produtos', 'error');
-                    });
+                recalcularEstoque();
             }
 
-            // Listener para movimentações
-            function subscribeToMovements() {
-                if (state.movementsUnsubscribe) {
-                    state.movementsUnsubscribe();
-                }
+            function useInitialData() {
+                state.movements = [
+                    { id: '1', data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
+                    { id: '2', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                    { id: '3', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                    { id: '4', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                    { id: '5', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
+                    { id: '6', data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
+                    { id: '7', data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
+                    { id: '8', data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
+                    { id: '9', data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
+                    { id: '10', data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
+                    { id: '11', data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                    { id: '12', data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
+                    { id: '13', data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
+                ];
                 
-                state.movementsUnsubscribe = db.collection('movimentacoes')
-                    .orderBy('data', 'desc')
-                    .orderBy('hora', 'desc')
-                    .onSnapshot((snapshot) => {
-                        state.movements = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        
-                        console.log('Movimentações atualizadas:', state.movements.length);
-                        
-                        // Recalcular estoque
-                        recalcularEstoque();
-                        
-                        // Atualizar interface baseado na aba atual
-                        switch(state.activeTab) {
-                            case 'dashboard':
-                                renderDashboard();
-                                break;
-                            case 'historico':
-                                renderHistorico();
-                                break;
-                            case 'estoque':
-                                renderEstoque();
-                                break;
-                            case 'relatorios':
-                                if (state.reportType === 'entradas' || state.reportType === 'saidas') {
-                                    if (state.reportType === 'entradas') {
-                                        generateEntriesReport();
-                                    } else {
-                                        generateExitsReport();
-                                    }
-                                } else {
-                                    renderRelatorios();
-                                }
-                                break;
-                        }
-                        
-                        showToast('Dados sincronizados!', 'success');
-                    }, (error) => {
-                        console.error('Erro no listener de movimentações:', error);
-                        showToast('Erro ao sincronizar movimentações', 'error');
-                    });
+                state.produtos = produtosIniciais;
+            }
+
+            function saveLocalData() {
+                localStorage.setItem('controle_estoque_offline', JSON.stringify({
+                    movements: state.movements,
+                    produtos: state.produtos
+                }));
             }
 
             // ==================== RECALCULAR ESTOQUE ====================
             function recalcularEstoque() {
                 const stockMap = {};
                 
-                // Processar todas as movimentações
                 state.movements.forEach(mov => {
                     if (!stockMap[mov.produto]) {
                         stockMap[mov.produto] = {
@@ -1078,7 +957,6 @@
                     }
                 });
 
-                // Garantir que todos os produtos apareçam (mesmo com estoque zero)
                 state.produtos.forEach(prod => {
                     if (!stockMap[prod.nome]) {
                         stockMap[prod.nome] = {
@@ -1094,73 +972,137 @@
                 state.currentStock = Object.values(stockMap);
             }
 
+            // ==================== INICIALIZAÇÃO ====================
+            function initializeApp() {
+                loadingMessage.textContent = 'Carregando dados...';
+                
+                // Primeiro, carregar dados locais para garantir que algo apareça
+                loadLocalData();
+                
+                // Tentar conectar ao Firebase
+                try {
+                    loadingMessage.textContent = 'Conectando ao Firebase...';
+                    firebase.initializeApp(firebaseConfig);
+                    const db = firebase.firestore();
+                    
+                    // Configurar persistência offline
+                    db.enablePersistence()
+                        .then(() => {
+                            console.log('Persistência offline habilitada');
+                        })
+                        .catch((err) => {
+                            console.log('Persistência offline não disponível:', err);
+                        });
+                    
+                    state.firebaseAvailable = true;
+                    if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase conectado';
+                    if (modeStatus) modeStatus.innerHTML = 'Online (Firebase)';
+                    if (connectionStatus) {
+                        connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
+                        connectionStatus.className = 'connection-status online';
+                    }
+                    
+                    // Verificar se precisa inicializar dados no Firebase
+                    checkAndInitializeFirebase(db);
+                    
+                } catch (e) {
+                    console.error('Erro ao conectar Firebase:', e);
+                    state.firebaseAvailable = false;
+                    if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline (Firebase indisponível)';
+                    if (modeStatus) modeStatus.innerHTML = 'Offline (dados locais)';
+                    if (connectionStatus) {
+                        connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Modo offline';
+                        connectionStatus.className = 'connection-status offline';
+                    }
+                }
+                
+                // Sempre mostrar a tela de login após carregar
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                }, 1500);
+            }
+
+            async function checkAndInitializeFirebase(db) {
+                try {
+                    // Verificar se existem produtos
+                    const produtosSnapshot = await db.collection('produtos').get();
+                    
+                    if (produtosSnapshot.empty) {
+                        console.log('Inicializando produtos no Firebase...');
+                        
+                        // Criar produtos iniciais
+                        const batch = db.batch();
+                        produtosIniciais.forEach(produto => {
+                            const docRef = db.collection('produtos').doc();
+                            batch.set(docRef, {
+                                ...produto,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        });
+                        
+                        await batch.commit();
+                        
+                        // Criar movimentações iniciais
+                        const movimentacoesBatch = db.batch();
+                        state.movements.forEach(mov => {
+                            const docRef = db.collection('movimentacoes').doc();
+                            movimentacoesBatch.set(docRef, {
+                                ...mov,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        });
+                        
+                        await movimentacoesBatch.commit();
+                        console.log('Dados iniciais criados no Firebase!');
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar Firebase:', error);
+                }
+            }
+
             // ==================== LOGIN ====================
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
                 
-                try {
-                    // Autenticação simples (pode ser substituída por Firebase Auth)
-                    if (email === 'admin@porter.com.br' && password === 'admin123') {
-                        state.user = { email: 'admin@porter.com.br' };
-                        state.isAdmin = true;
-                        userEmail.textContent = 'admin@porter.com.br';
-                        userProfile.textContent = 'admin';
-                        
-                        document.querySelectorAll('.admin-only').forEach(el => {
-                            el.style.display = 'block';
-                        });
-                        
-                        loginScreen.style.display = 'none';
-                        mainApp.style.display = 'block';
-                        
-                        // Inicializar dados do Firebase se necessário
-                        await initializeFirebaseData();
-                        
-                        // Inscrever nos listeners
-                        subscribeToProdutos();
-                        subscribeToMovements();
-                        
-                        renderCurrentTab();
-                        showToast('Login realizado! Dados sincronizados.');
-                    } else if (email === 'user@porter.com.br' && password === 'user123') {
-                        state.user = { email: 'user@porter.com.br' };
-                        state.isAdmin = false;
-                        userEmail.textContent = 'user@porter.com.br';
-                        userProfile.textContent = 'usuario';
-                        
-                        loginScreen.style.display = 'none';
-                        mainApp.style.display = 'block';
-                        
-                        // Inicializar dados do Firebase se necessário
-                        await initializeFirebaseData();
-                        
-                        // Inscrever nos listeners
-                        subscribeToProdutos();
-                        subscribeToMovements();
-                        
-                        renderCurrentTab();
-                        showToast('Login realizado! Dados sincronizados.');
-                    } else {
-                        showToast('E-mail ou senha inválidos', 'error');
-                    }
-                } catch (error) {
-                    console.error('Erro no login:', error);
-                    showToast('Erro ao conectar com Firebase', 'error');
+                // Autenticação simples
+                if (email === 'admin@porter.com.br' && password === 'admin123') {
+                    state.user = { email: 'admin@porter.com.br' };
+                    state.isAdmin = true;
+                    userEmail.textContent = 'admin@porter.com.br';
+                    userProfile.textContent = 'admin';
+                    
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    
+                    loginScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    
+                    renderCurrentTab();
+                    showToast(`Login realizado! Modo: ${state.firebaseAvailable ? 'Online' : 'Offline'}`);
+                    
+                } else if (email === 'user@porter.com.br' && password === 'user123') {
+                    state.user = { email: 'user@porter.com.br' };
+                    state.isAdmin = false;
+                    userEmail.textContent = 'user@porter.com.br';
+                    userProfile.textContent = 'usuario';
+                    
+                    loginScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    
+                    renderCurrentTab();
+                    showToast(`Login realizado! Modo: ${state.firebaseAvailable ? 'Online' : 'Offline'}`);
+                    
+                } else {
+                    showToast('E-mail ou senha inválidos', 'error');
                 }
             });
 
             // ==================== LOGOUT ====================
             logoutBtn.addEventListener('click', () => {
-                // Cancelar listeners
-                if (state.movementsUnsubscribe) {
-                    state.movementsUnsubscribe();
-                }
-                if (state.produtosUnsubscribe) {
-                    state.produtosUnsubscribe();
-                }
-                
                 state.user = null;
                 state.isAdmin = false;
                 mainApp.style.display = 'none';
@@ -1269,10 +1211,6 @@
                                 </table>
                             </div>
                         `}
-                        
-                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
-                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
-                        </div>
                     </div>
                 `;
             }
@@ -1367,18 +1305,18 @@
                 });
             }
 
-            async function handleSaveMovement(e) {
+            function handleSaveMovement(e) {
                 e.preventDefault();
                 
                 const movimento = {
+                    id: Date.now().toString(),
                     data: document.getElementById('movData').value,
                     hora: document.getElementById('movHora').value,
                     operador: document.getElementById('movOperador').value,
                     produto: document.getElementById('movProduto').value,
                     categoria: document.getElementById('movCategoria').value,
                     quantidade: parseInt(document.getElementById('movQuantidade').value),
-                    tipo: document.querySelector('input[name="tipo"]:checked').value,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    tipo: document.querySelector('input[name="tipo"]:checked').value
                 };
 
                 // Verificar estoque para saídas
@@ -1390,24 +1328,21 @@
                     }
                 }
 
-                try {
-                    // Salvar no Firebase
-                    await db.collection('movimentacoes').add(movimento);
-                    
-                    showToast('Movimentação registrada e sincronizada!');
-                    
-                    // Limpar formulário
-                    document.getElementById('movData').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
-                    document.getElementById('movProduto').value = '';
-                    document.getElementById('movQuantidade').value = '1';
-                    
-                    // Mudar para aba de histórico
-                    switchTab('historico');
-                } catch (error) {
-                    console.error('Erro ao salvar movimentação:', error);
-                    showToast('Erro ao salvar no Firebase', 'error');
-                }
+                // Adicionar localmente
+                state.movements.unshift(movimento);
+                recalcularEstoque();
+                saveLocalData();
+                
+                showToast('Movimentação registrada! (Modo offline)');
+                
+                // Limpar formulário
+                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
+                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
+                document.getElementById('movProduto').value = '';
+                document.getElementById('movQuantidade').value = '1';
+                
+                // Mudar para aba de histórico
+                switchTab('historico');
             }
 
             // ==================== HISTÓRICO ====================
@@ -1522,10 +1457,6 @@
                                 </div>
                             ` : ''}
                         `}
-                        
-                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
-                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
-                        </div>
                     </div>
                 `;
 
@@ -1563,16 +1494,14 @@
                 });
 
                 document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
+                    btn.addEventListener('click', (e) => {
                         const id = e.currentTarget.getAttribute('data-id');
-                        showConfirmModal('Excluir movimentação?', async () => {
-                            try {
-                                await db.collection('movimentacoes').doc(id).delete();
-                                showToast('Movimentação excluída!');
-                            } catch (error) {
-                                console.error('Erro ao excluir:', error);
-                                showToast('Erro ao excluir', 'error');
-                            }
+                        showConfirmModal('Excluir movimentação?', () => {
+                            state.movements = state.movements.filter(m => m.id !== id);
+                            recalcularEstoque();
+                            saveLocalData();
+                            renderHistorico();
+                            showToast('Movimentação excluída!');
                         });
                     });
                 });
@@ -1694,10 +1623,6 @@
                                 </div>
                             </div>
                         `}
-                        
-                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
-                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
-                        </div>
                     </div>
                 `;
 
@@ -2025,10 +1950,6 @@
                                 <p>Não há registros para o período selecionado.</p>
                             </div>
                         ` : ''}
-                        
-                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
-                            <small><i class="fas fa-sync-alt"></i> Dados atualizados em tempo real</small>
-                        </div>
                     </div>
                 `;
 
@@ -2124,6 +2045,9 @@
                     switchTab(tabId);
                 });
             });
+
+            // ==================== INICIAR APLICAÇÃO ====================
+            initializeApp();
         })();
     </script>
 </body>
