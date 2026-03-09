@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porter - Controle de Estoque</title>
+    <title>Porter - Controle de Estoque Online</title>
     
-<!-- Firebase SDK (versão compatível) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase SDK (versão compatível) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -271,8 +271,6 @@
         .btn-warning { background: var(--warning); color: white; }
         .btn-warning:hover { background: #d68910; }
         .btn-sm { padding: 8px 15px; font-size: 0.9rem; }
-        .btn-outline { background: transparent; border: 1px solid var(--secondary); color: var(--secondary); }
-        .btn-outline:hover { background: var(--secondary); color: white; }
 
         .table-container {
             overflow-x: auto;
@@ -373,75 +371,6 @@
             font-size: 4rem;
             margin-bottom: 20px;
             color: #ddd;
-        }
-
-        .report-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .report-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 25px;
-            transition: transform 0.3s;
-        }
-
-        .report-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        .report-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        .report-card h3 {
-            color: var(--primary);
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-        }
-
-        .report-card p {
-            color: var(--gray);
-            margin-bottom: 20px;
-            font-size: 0.95rem;
-        }
-
-        .date-range {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .report-preview {
-            margin-top: 30px;
-            border-top: 2px solid #eee;
-            padding-top: 30px;
-        }
-
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .report-header h3 {
-            color: var(--primary);
-            font-size: 1.3rem;
         }
 
         .pagination {
@@ -550,39 +479,73 @@
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); }
 
-        .pdf-preview {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 30px;
+        .report-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
             margin-top: 20px;
-            background: #f9f9f9;
-            display: none;
         }
 
-        .pdf-preview.active {
-            display: block;
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            transition: transform 0.3s;
         }
 
-        .pdf-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
-        .pdf-logo {
-            max-width: 200px;
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
             margin-bottom: 20px;
         }
 
-        .pdf-title {
+        .report-card h3 {
             color: var(--primary);
-            font-size: 24px;
-            margin-bottom: 5px;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
         }
 
-        .pdf-subtitle {
+        .report-card p {
             color: var(--gray);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .report-preview {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 30px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .report-header h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
         }
 
         .stock-critical { color: var(--danger); font-weight: bold; }
@@ -669,7 +632,7 @@
         <div id="loadingScreen" class="loading-screen">
             <div class="loader"></div>
             <p>Carregando sistema...</p>
-            <p style="font-size: 12px; margin-top: 10px;">Aguarde...</p>
+            <p style="font-size: 12px; margin-top: 10px;">Conectando ao Firebase...</p>
         </div>
 
         <!-- Login Screen -->
@@ -699,7 +662,7 @@
                 
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--gray);">
                     <p>Admin: admin@porter.com.br / admin123</p>
-                    <p>Modo offline disponível</p>
+                    <p>Usuário: user@porter.com.br / user123</p>
                 </div>
             </div>
         </div>
@@ -715,6 +678,9 @@
                     <div class="user-info">
                         <span id="userEmail"></span>
                         <span id="userProfile" class="profile-badge">usuario</span>
+                        <span id="connectionStatus" class="connection-status online">
+                            <i class="fas fa-circle"></i> Online
+                        </span>
                         <button id="logoutBtn" class="btn btn-danger btn-sm">
                             <i class="fas fa-sign-out-alt"></i> Sair
                         </button>
@@ -766,9 +732,7 @@
             <footer>
                 <div class="container">
                     <p>Sistema de Controle de Estoque Porter © 2026</p>
-                    <p id="connectionStatus" class="connection-status online">
-                        <i class="fas fa-circle"></i> Conectado
-                    </p>
+                    <p><i class="fas fa-database"></i> Dados sincronizados em tempo real</p>
                 </div>
             </footer>
         </div>
@@ -845,11 +809,8 @@
                 activeTab: 'dashboard',
                 currentPage: 1,
                 itemsPerPage: 15,
-                currentSort: { column: 'data', direction: 'desc' },
-                itemToDelete: null,
-                showConfirmModal: false,
-                firebaseReady: false,
                 
+                // Filtros
                 searchHistory: '',
                 filterType: '',
                 filterProduct: '',
@@ -858,9 +819,9 @@
                 filterCategory: '',
                 
                 // Relatórios
-                reportType: null, // 'estoque', 'entradas', 'saidas'
-                reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0], // Primeiro dia do mês
-                reportEndDate: new Date().toISOString().split('T')[0], // Hoje
+                reportType: null,
+                reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0],
+                reportEndDate: new Date().toISOString().split('T')[0],
                 reportData: [],
                 
                 formData: {
@@ -871,7 +832,11 @@
                     categoria: 'Limpeza',
                     quantidade: 1,
                     tipo: 'entrada'
-                }
+                },
+                
+                // Listeners do Firebase
+                movementsUnsubscribe: null,
+                produtosUnsubscribe: null
             };
 
             // ==================== ELEMENTOS DOM ====================
@@ -921,54 +886,178 @@
                 return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
             }
 
-            // ==================== CARREGAR DO LOCALSTORAGE ====================
-            function loadFromLocalStorage() {
-                const saved = localStorage.getItem('controle_estoque');
-                if (saved) {
-                    try {
-                        const data = JSON.parse(saved);
-                        state.movements = data.movements || [];
-                        state.produtos = data.produtos || produtosIniciais;
-                    } catch (e) {
-                        console.error('Erro ao carregar localStorage', e);
-                    }
-                }
+            // ==================== INICIALIZAÇÃO FIREBASE ====================
+            let db;
+            
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
                 
-                if (state.movements.length === 0) {
-                    // Dados iniciais
-                    state.movements = [
-                        { id: '1', data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
-                        { id: '2', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                        { id: '3', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                        { id: '4', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                        { id: '5', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
-                        { id: '6', data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
-                        { id: '7', data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
-                        { id: '8', data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
-                        { id: '9', data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
-                        { id: '10', data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
-                        { id: '11', data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                        { id: '12', data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
-                        { id: '13', data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
-                    ];
-                }
+                // Configurar para funcionar offline quando necessário
+                db.enablePersistence()
+                    .catch((err) => {
+                        if (err.code == 'failed-precondition') {
+                            console.log('Persistência offline falhou - múltiplas abas abertas');
+                        } else if (err.code == 'unimplemented') {
+                            console.log('Navegador não suporta persistência offline');
+                        }
+                    });
                 
-                state.produtos = produtosIniciais;
-                recalcularEstoque();
-                saveToLocalStorage();
+                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase Conectado';
+                connectionStatus.className = 'connection-status online';
+            } catch (e) {
+                console.error('Erro ao conectar Firebase:', e);
+                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Erro de conexão';
+                connectionStatus.className = 'connection-status offline';
             }
 
-            function saveToLocalStorage() {
-                localStorage.setItem('controle_estoque', JSON.stringify({
-                    movements: state.movements,
-                    produtos: state.produtos
-                }));
+            // ==================== INICIALIZAR DADOS INICIAIS ====================
+            async function initializeFirebaseData() {
+                try {
+                    // Verificar se já existem produtos
+                    const produtosSnapshot = await db.collection('produtos').get();
+                    
+                    if (produtosSnapshot.empty) {
+                        console.log('Inicializando produtos no Firebase...');
+                        
+                        // Criar produtos iniciais
+                        const batch = db.batch();
+                        produtosIniciais.forEach(produto => {
+                            const docRef = db.collection('produtos').doc();
+                            batch.set(docRef, {
+                                ...produto,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        });
+                        
+                        await batch.commit();
+                        
+                        // Criar movimentações iniciais
+                        const movimentacoesBatch = db.batch();
+                        const movimentacoesIniciais = [
+                            { data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
+                            { data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                            { data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                            { data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                            { data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
+                            { data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
+                            { data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
+                            { data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
+                            { data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
+                            { data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
+                            { data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                            { data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
+                            { data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
+                        ];
+                        
+                        movimentacoesIniciais.forEach(mov => {
+                            const docRef = db.collection('movimentacoes').doc();
+                            movimentacoesBatch.set(docRef, {
+                                ...mov,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        });
+                        
+                        await movimentacoesBatch.commit();
+                        console.log('Dados iniciais criados com sucesso!');
+                    }
+                } catch (error) {
+                    console.error('Erro ao inicializar dados:', error);
+                }
+            }
+
+            // ==================== LISTENERS EM TEMPO REAL ====================
+            
+            // Listener para produtos
+            function subscribeToProdutos() {
+                if (state.produtosUnsubscribe) {
+                    state.produtosUnsubscribe();
+                }
+                
+                state.produtosUnsubscribe = db.collection('produtos')
+                    .onSnapshot((snapshot) => {
+                        state.produtos = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        
+                        console.log('Produtos atualizados:', state.produtos.length);
+                        
+                        // Recalcular estoque quando produtos mudam
+                        if (state.movements.length > 0) {
+                            recalcularEstoque();
+                        }
+                        
+                        // Atualizar interface se necessário
+                        if (state.activeTab === 'estoque') {
+                            renderEstoque();
+                        } else if (state.activeTab === 'dashboard') {
+                            renderDashboard();
+                        } else if (state.activeTab === 'relatorios' && state.reportType === 'estoque') {
+                            generateStockReport();
+                        }
+                    }, (error) => {
+                        console.error('Erro no listener de produtos:', error);
+                        showToast('Erro ao sincronizar produtos', 'error');
+                    });
+            }
+
+            // Listener para movimentações
+            function subscribeToMovements() {
+                if (state.movementsUnsubscribe) {
+                    state.movementsUnsubscribe();
+                }
+                
+                state.movementsUnsubscribe = db.collection('movimentacoes')
+                    .orderBy('data', 'desc')
+                    .orderBy('hora', 'desc')
+                    .onSnapshot((snapshot) => {
+                        state.movements = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        
+                        console.log('Movimentações atualizadas:', state.movements.length);
+                        
+                        // Recalcular estoque
+                        recalcularEstoque();
+                        
+                        // Atualizar interface baseado na aba atual
+                        switch(state.activeTab) {
+                            case 'dashboard':
+                                renderDashboard();
+                                break;
+                            case 'historico':
+                                renderHistorico();
+                                break;
+                            case 'estoque':
+                                renderEstoque();
+                                break;
+                            case 'relatorios':
+                                if (state.reportType === 'entradas' || state.reportType === 'saidas') {
+                                    if (state.reportType === 'entradas') {
+                                        generateEntriesReport();
+                                    } else {
+                                        generateExitsReport();
+                                    }
+                                } else {
+                                    renderRelatorios();
+                                }
+                                break;
+                        }
+                        
+                        showToast('Dados sincronizados!', 'success');
+                    }, (error) => {
+                        console.error('Erro no listener de movimentações:', error);
+                        showToast('Erro ao sincronizar movimentações', 'error');
+                    });
             }
 
             // ==================== RECALCULAR ESTOQUE ====================
             function recalcularEstoque() {
                 const stockMap = {};
                 
+                // Processar todas as movimentações
                 state.movements.forEach(mov => {
                     if (!stockMap[mov.produto]) {
                         stockMap[mov.produto] = {
@@ -989,7 +1078,8 @@
                     }
                 });
 
-                produtosIniciais.forEach(prod => {
+                // Garantir que todos os produtos apareçam (mesmo com estoque zero)
+                state.produtos.forEach(prod => {
                     if (!stockMap[prod.nome]) {
                         stockMap[prod.nome] = {
                             produto: prod.nome,
@@ -1004,52 +1094,73 @@
                 state.currentStock = Object.values(stockMap);
             }
 
-            // ==================== INICIALIZAÇÃO ====================
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                loginScreen.style.display = 'flex';
-                
-                loadFromLocalStorage();
-                
-                // Tenta conectar Firebase, mas não trava
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    state.firebaseReady = true;
-                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
-                } catch (e) {
-                    console.log('Modo offline');
-                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Modo offline';
-                }
-            }, 1000);
-
             // ==================== LOGIN ====================
-            document.getElementById('loginForm').addEventListener('submit', (e) => {
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
                 
-                if (email === 'admin@porter.com.br' && password === 'admin123') {
-                    state.user = { email: 'admin@porter.com.br' };
-                    state.isAdmin = true;
-                    userEmail.textContent = 'admin@porter.com.br';
-                    userProfile.textContent = 'admin';
-                    
-                    document.querySelectorAll('.admin-only').forEach(el => {
-                        el.style.display = 'block';
-                    });
-                    
-                    loginScreen.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    
-                    renderCurrentTab();
-                    showToast('Login realizado!');
-                } else {
-                    showToast('E-mail ou senha inválidos', 'error');
+                try {
+                    // Autenticação simples (pode ser substituída por Firebase Auth)
+                    if (email === 'admin@porter.com.br' && password === 'admin123') {
+                        state.user = { email: 'admin@porter.com.br' };
+                        state.isAdmin = true;
+                        userEmail.textContent = 'admin@porter.com.br';
+                        userProfile.textContent = 'admin';
+                        
+                        document.querySelectorAll('.admin-only').forEach(el => {
+                            el.style.display = 'block';
+                        });
+                        
+                        loginScreen.style.display = 'none';
+                        mainApp.style.display = 'block';
+                        
+                        // Inicializar dados do Firebase se necessário
+                        await initializeFirebaseData();
+                        
+                        // Inscrever nos listeners
+                        subscribeToProdutos();
+                        subscribeToMovements();
+                        
+                        renderCurrentTab();
+                        showToast('Login realizado! Dados sincronizados.');
+                    } else if (email === 'user@porter.com.br' && password === 'user123') {
+                        state.user = { email: 'user@porter.com.br' };
+                        state.isAdmin = false;
+                        userEmail.textContent = 'user@porter.com.br';
+                        userProfile.textContent = 'usuario';
+                        
+                        loginScreen.style.display = 'none';
+                        mainApp.style.display = 'block';
+                        
+                        // Inicializar dados do Firebase se necessário
+                        await initializeFirebaseData();
+                        
+                        // Inscrever nos listeners
+                        subscribeToProdutos();
+                        subscribeToMovements();
+                        
+                        renderCurrentTab();
+                        showToast('Login realizado! Dados sincronizados.');
+                    } else {
+                        showToast('E-mail ou senha inválidos', 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro no login:', error);
+                    showToast('Erro ao conectar com Firebase', 'error');
                 }
             });
 
             // ==================== LOGOUT ====================
             logoutBtn.addEventListener('click', () => {
+                // Cancelar listeners
+                if (state.movementsUnsubscribe) {
+                    state.movementsUnsubscribe();
+                }
+                if (state.produtosUnsubscribe) {
+                    state.produtosUnsubscribe();
+                }
+                
                 state.user = null;
                 state.isAdmin = false;
                 mainApp.style.display = 'none';
@@ -1158,6 +1269,10 @@
                                 </table>
                             </div>
                         `}
+                        
+                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
+                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
+                        </div>
                     </div>
                 `;
             }
@@ -1193,7 +1308,7 @@
                                     <label>Produto</label>
                                     <select id="movProduto" required>
                                         <option value="">Selecione</option>
-                                        ${produtosIniciais.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('')}
+                                        ${state.produtos.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -1245,27 +1360,28 @@
                 });
 
                 document.getElementById('movProduto').addEventListener('change', (e) => {
-                    const produto = produtosIniciais.find(p => p.nome === e.target.value);
+                    const produto = state.produtos.find(p => p.nome === e.target.value);
                     if (produto) {
                         document.getElementById('movCategoria').value = produto.categoria;
                     }
                 });
             }
 
-            function handleSaveMovement(e) {
+            async function handleSaveMovement(e) {
                 e.preventDefault();
                 
                 const movimento = {
-                    id: Date.now().toString(),
                     data: document.getElementById('movData').value,
                     hora: document.getElementById('movHora').value,
                     operador: document.getElementById('movOperador').value,
                     produto: document.getElementById('movProduto').value,
                     categoria: document.getElementById('movCategoria').value,
                     quantidade: parseInt(document.getElementById('movQuantidade').value),
-                    tipo: document.querySelector('input[name="tipo"]:checked').value
+                    tipo: document.querySelector('input[name="tipo"]:checked').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
+                // Verificar estoque para saídas
                 if (movimento.tipo === 'saida') {
                     const stockInfo = state.currentStock.find(item => item.produto === movimento.produto);
                     if (stockInfo && stockInfo.estoque < movimento.quantidade) {
@@ -1274,18 +1390,24 @@
                     }
                 }
 
-                state.movements.unshift(movimento);
-                saveToLocalStorage();
-                recalcularEstoque();
-                
-                showToast('Movimentação registrada!');
-                
-                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
-                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
-                document.getElementById('movProduto').value = '';
-                document.getElementById('movQuantidade').value = '1';
-                
-                switchTab('historico');
+                try {
+                    // Salvar no Firebase
+                    await db.collection('movimentacoes').add(movimento);
+                    
+                    showToast('Movimentação registrada e sincronizada!');
+                    
+                    // Limpar formulário
+                    document.getElementById('movData').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
+                    document.getElementById('movProduto').value = '';
+                    document.getElementById('movQuantidade').value = '1';
+                    
+                    // Mudar para aba de histórico
+                    switchTab('historico');
+                } catch (error) {
+                    console.error('Erro ao salvar movimentação:', error);
+                    showToast('Erro ao salvar no Firebase', 'error');
+                }
             }
 
             // ==================== HISTÓRICO ====================
@@ -1297,7 +1419,7 @@
                 if (state.searchHistory) {
                     filtered = filtered.filter(m => 
                         m.produto.toLowerCase().includes(state.searchHistory.toLowerCase()) ||
-                        m.operador.toLowerCase().includes(state.searchHistory.toLowerCase())
+                        (m.operador && m.operador.toLowerCase().includes(state.searchHistory.toLowerCase()))
                     );
                 }
                 
@@ -1330,7 +1452,7 @@
                             </select>
                             <select id="filterProduct">
                                 <option value="">Todos os produtos</option>
-                                ${produtosIniciais.map(p => 
+                                ${state.produtos.map(p => 
                                     `<option value="${p.nome}" ${state.filterProduct === p.nome ? 'selected' : ''}>${p.nome}</option>`
                                 ).join('')}
                             </select>
@@ -1338,11 +1460,6 @@
                             <button id="clearFilters" class="btn btn-warning">
                                 <i class="fas fa-times"></i> Limpar
                             </button>
-                            ${state.isAdmin ? `
-                                <button id="exportCsv" class="btn btn-success">
-                                    <i class="fas fa-download"></i> Exportar
-                                </button>
-                            ` : ''}
                         </div>
 
                         ${paginated.length === 0 ? `
@@ -1370,7 +1487,7 @@
                                             <tr>
                                                 <td>${formatDate(m.data)}</td>
                                                 <td>${m.hora}</td>
-                                                <td>${m.operador}</td>
+                                                <td>${m.operador || '-'}</td>
                                                 <td>${m.produto}</td>
                                                 <td>
                                                     <span class="category-indicator category-${m.categoria.toLowerCase()}"></span>
@@ -1405,6 +1522,10 @@
                                 </div>
                             ` : ''}
                         `}
+                        
+                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
+                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
+                        </div>
                     </div>
                 `;
 
@@ -1442,14 +1563,16 @@
                 });
 
                 document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    btn.addEventListener('click', async (e) => {
                         const id = e.currentTarget.getAttribute('data-id');
-                        showConfirmModal('Excluir movimentação?', () => {
-                            state.movements = state.movements.filter(m => m.id !== id);
-                            saveToLocalStorage();
-                            recalcularEstoque();
-                            renderHistorico();
-                            showToast('Movimentação excluída!');
+                        showConfirmModal('Excluir movimentação?', async () => {
+                            try {
+                                await db.collection('movimentacoes').doc(id).delete();
+                                showToast('Movimentação excluída!');
+                            } catch (error) {
+                                console.error('Erro ao excluir:', error);
+                                showToast('Erro ao excluir', 'error');
+                            }
                         });
                     });
                 });
@@ -1462,19 +1585,6 @@
                             renderHistorico();
                         }
                     });
-                });
-
-                document.getElementById('exportCsv')?.addEventListener('click', () => {
-                    const csv = state.movements.map(m => 
-                        `${m.data},${m.hora},${m.operador},${m.produto},${m.categoria},${m.quantidade},${m.tipo}`
-                    ).join('\n');
-                    
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `historico_${new Date().toISOString().split('T')[0]}.csv`;
-                    a.click();
                 });
             }
 
@@ -1584,6 +1694,10 @@
                                 </div>
                             </div>
                         `}
+                        
+                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
+                            <small><i class="fas fa-sync-alt"></i> Atualizado em tempo real</small>
+                        </div>
                     </div>
                 `;
 
@@ -1598,7 +1712,6 @@
                 });
 
                 document.getElementById('refreshStock')?.addEventListener('click', () => {
-                    recalcularEstoque();
                     renderEstoque();
                     showToast('Estoque atualizado!');
                 });
@@ -1606,14 +1719,12 @@
 
             // ==================== FUNÇÕES DE RELATÓRIOS ====================
             
-            // Gerar relatório de estoque atual
             function generateStockReport() {
                 state.reportType = 'estoque';
                 state.reportData = [...state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
                 renderRelatorios();
             }
 
-            // Gerar relatório de entradas por período
             function generateEntriesReport() {
                 const startDate = state.reportStartDate;
                 const endDate = state.reportEndDate;
@@ -1629,7 +1740,6 @@
                 renderRelatorios();
             }
 
-            // Gerar relatório de saídas por período
             function generateExitsReport() {
                 const startDate = state.reportStartDate;
                 const endDate = state.reportEndDate;
@@ -1645,16 +1755,14 @@
                 renderRelatorios();
             }
 
-            // Gerar PDF do relatório atual
             function generateReportPDF() {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Configurar fonte
                 doc.setFont('helvetica');
                 
                 // Cabeçalho
-                doc.setFillColor(44, 62, 80); // Cor primária
+                doc.setFillColor(44, 62, 80);
                 doc.rect(0, 0, 210, 40, 'F');
                 
                 doc.setTextColor(255, 255, 255);
@@ -1690,7 +1798,7 @@
                 
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'normal');
-                doc.setTextColor(127, 140, 141); // Cinza
+                doc.setTextColor(127, 140, 141);
                 doc.text(subtitle, 105, 65, { align: 'center' });
                 
                 // Preparar dados da tabela
@@ -1708,15 +1816,6 @@
                         break;
                         
                     case 'entradas':
-                        headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
-                        tableData = state.reportData.map(item => [
-                            formatDate(item.data),
-                            item.produto,
-                            item.quantidade.toString(),
-                            item.operador || '-'
-                        ]);
-                        break;
-                        
                     case 'saidas':
                         headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
                         tableData = state.reportData.map(item => [
@@ -1742,7 +1841,7 @@
                         lineWidth: 0.1,
                     },
                     headStyles: {
-                        fillColor: [52, 152, 219], // Azul secundário
+                        fillColor: [52, 152, 219],
                         textColor: [255, 255, 255],
                         fontStyle: 'bold',
                         halign: 'center',
@@ -1764,18 +1863,15 @@
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
                     
-                    // Linha separadora
                     doc.setDrawColor(220, 220, 220);
                     doc.line(15, 285, 195, 285);
                     
-                    // Texto do rodapé
                     doc.setFontSize(8);
                     doc.setTextColor(127, 140, 141);
                     doc.text('Sistema de Controle de Estoque Porter', 105, 295, { align: 'center' });
                     doc.text(`Página ${i} de ${pageCount}`, 185, 295, { align: 'right' });
                 }
                 
-                // Baixar PDF
                 const filename = `relatorio_${state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
                 doc.save(filename);
                 showToast('PDF gerado com sucesso!');
@@ -1789,7 +1885,6 @@
                     <div class="card">
                         <h2 class="card-title">Relatórios do Sistema</h2>
                         
-                        <!-- Cards de relatórios -->
                         <div class="report-cards">
                             <!-- Relatório de Estoque Atual -->
                             <div class="report-card">
@@ -1852,7 +1947,6 @@
                             </div>
                         </div>
                         
-                        <!-- Prévia do relatório -->
                         ${state.reportData && state.reportData.length > 0 ? `
                             <div class="report-preview">
                                 <div class="report-header">
@@ -1931,10 +2025,13 @@
                                 <p>Não há registros para o período selecionado.</p>
                             </div>
                         ` : ''}
+                        
+                        <div style="margin-top: 20px; text-align: right; color: var(--gray);">
+                            <small><i class="fas fa-sync-alt"></i> Dados atualizados em tempo real</small>
+                        </div>
                     </div>
                 `;
 
-                // Event listeners dos botões
                 document.getElementById('stockReportBtn')?.addEventListener('click', generateStockReport);
                 
                 document.getElementById('entriesReportBtn')?.addEventListener('click', () => {
@@ -2000,6 +2097,7 @@
             // ==================== TABS ====================
             function switchTab(tabId) {
                 state.activeTab = tabId;
+                state.currentPage = 1;
                 
                 tabs.forEach(tab => {
                     if (tab.getAttribute('data-tab') === tabId) {
