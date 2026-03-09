@@ -271,6 +271,8 @@
         .btn-warning { background: var(--warning); color: white; }
         .btn-warning:hover { background: #d68910; }
         .btn-sm { padding: 8px 15px; font-size: 0.9rem; }
+        .btn-outline { background: transparent; border: 1px solid var(--secondary); color: var(--secondary); }
+        .btn-outline:hover { background: var(--secondary); color: white; }
 
         .table-container {
             overflow-x: auto;
@@ -371,6 +373,75 @@
             font-size: 4rem;
             margin-bottom: 20px;
             color: #ddd;
+        }
+
+        .report-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            transition: transform 0.3s;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .report-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .report-card p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .report-preview {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 30px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .report-header h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
         }
 
         .pagination {
@@ -581,6 +652,14 @@
             .stats-cards {
                 grid-template-columns: 1fr;
             }
+            
+            .date-range {
+                grid-template-columns: 1fr;
+            }
+            
+            .report-cards {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -778,10 +857,11 @@
                 searchStock: '',
                 filterCategory: '',
                 
-                reportMonth: (new Date().getMonth() + 1).toString().padStart(2, '0'),
-                reportYear: new Date().getFullYear().toString(),
-                showPdfPreview: false,
-                pdfData: [],
+                // Relatórios
+                reportType: null, // 'estoque', 'entradas', 'saidas'
+                reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0], // Primeiro dia do mês
+                reportEndDate: new Date().toISOString().split('T')[0], // Hoje
+                reportData: [],
                 
                 formData: {
                     data: new Date().toISOString().split('T')[0],
@@ -1524,175 +1604,376 @@
                 });
             }
 
+            // ==================== FUNÇÕES DE RELATÓRIOS ====================
+            
+            // Gerar relatório de estoque atual
+            function generateStockReport() {
+                state.reportType = 'estoque';
+                state.reportData = [...state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
+                renderRelatorios();
+            }
+
+            // Gerar relatório de entradas por período
+            function generateEntriesReport() {
+                const startDate = state.reportStartDate;
+                const endDate = state.reportEndDate;
+                
+                const filtered = state.movements.filter(m => 
+                    m.tipo === 'entrada' &&
+                    m.data >= startDate &&
+                    m.data <= endDate
+                ).sort((a, b) => new Date(a.data) - new Date(b.data));
+                
+                state.reportType = 'entradas';
+                state.reportData = filtered;
+                renderRelatorios();
+            }
+
+            // Gerar relatório de saídas por período
+            function generateExitsReport() {
+                const startDate = state.reportStartDate;
+                const endDate = state.reportEndDate;
+                
+                const filtered = state.movements.filter(m => 
+                    m.tipo === 'saida' &&
+                    m.data >= startDate &&
+                    m.data <= endDate
+                ).sort((a, b) => new Date(a.data) - new Date(b.data));
+                
+                state.reportType = 'saidas';
+                state.reportData = filtered;
+                renderRelatorios();
+            }
+
+            // Gerar PDF do relatório atual
+            function generateReportPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Configurar fonte
+                doc.setFont('helvetica');
+                
+                // Cabeçalho
+                doc.setFillColor(44, 62, 80); // Cor primária
+                doc.rect(0, 0, 210, 40, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Porter - Controle de Estoque', 105, 20, { align: 'center' });
+                
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'normal');
+                
+                let title = '';
+                let subtitle = '';
+                
+                switch(state.reportType) {
+                    case 'estoque':
+                        title = 'Relatório de Estoque Atual';
+                        subtitle = `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`;
+                        break;
+                    case 'entradas':
+                        title = 'Relatório de Entradas por Período';
+                        subtitle = `Período: ${formatDate(state.reportStartDate)} a ${formatDate(state.reportEndDate)}`;
+                        break;
+                    case 'saidas':
+                        title = 'Relatório de Saídas por Período';
+                        subtitle = `Período: ${formatDate(state.reportStartDate)} a ${formatDate(state.reportEndDate)}`;
+                        break;
+                }
+                
+                doc.setTextColor(44, 62, 80);
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, 105, 55, { align: 'center' });
+                
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(127, 140, 141); // Cinza
+                doc.text(subtitle, 105, 65, { align: 'center' });
+                
+                // Preparar dados da tabela
+                let tableData = [];
+                let headers = [];
+                
+                switch(state.reportType) {
+                    case 'estoque':
+                        headers = ['Produto', 'Categoria', 'Estoque Atual'];
+                        tableData = state.reportData.map(item => [
+                            item.produto,
+                            item.categoria,
+                            item.estoque.toString()
+                        ]);
+                        break;
+                        
+                    case 'entradas':
+                        headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
+                        tableData = state.reportData.map(item => [
+                            formatDate(item.data),
+                            item.produto,
+                            item.quantidade.toString(),
+                            item.operador || '-'
+                        ]);
+                        break;
+                        
+                    case 'saidas':
+                        headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
+                        tableData = state.reportData.map(item => [
+                            formatDate(item.data),
+                            item.produto,
+                            item.quantidade.toString(),
+                            item.operador || '-'
+                        ]);
+                        break;
+                }
+                
+                // Gerar tabela
+                doc.autoTable({
+                    head: [headers],
+                    body: tableData,
+                    startY: 75,
+                    theme: 'grid',
+                    styles: {
+                        font: 'helvetica',
+                        fontSize: 10,
+                        cellPadding: 8,
+                        lineColor: [220, 220, 220],
+                        lineWidth: 0.1,
+                    },
+                    headStyles: {
+                        fillColor: [52, 152, 219], // Azul secundário
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center',
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245],
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 40 },
+                        1: { cellWidth: 60 },
+                        2: { cellWidth: 30, halign: 'center' },
+                        3: { cellWidth: 50 },
+                    },
+                    margin: { left: 15, right: 15 },
+                });
+                
+                // Rodapé
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    
+                    // Linha separadora
+                    doc.setDrawColor(220, 220, 220);
+                    doc.line(15, 285, 195, 285);
+                    
+                    // Texto do rodapé
+                    doc.setFontSize(8);
+                    doc.setTextColor(127, 140, 141);
+                    doc.text('Sistema de Controle de Estoque Porter', 105, 295, { align: 'center' });
+                    doc.text(`Página ${i} de ${pageCount}`, 185, 295, { align: 'right' });
+                }
+                
+                // Baixar PDF
+                const filename = `relatorio_${state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+                showToast('PDF gerado com sucesso!');
+            }
+
             // ==================== RELATÓRIOS ====================
             function renderRelatorios() {
                 const relatorios = document.getElementById('relatorios');
                 
                 relatorios.innerHTML = `
                     <div class="card">
-                        <h2 class="card-title">Relatórios Mensais em PDF</h2>
+                        <h2 class="card-title">Relatórios do Sistema</h2>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Mês</label>
-                                <select id="reportMonth">
-                                    ${['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-                                        .map((month, i) => {
-                                            const val = (i+1).toString().padStart(2,'0');
-                                            return `<option value="${val}" ${state.reportMonth === val ? 'selected' : ''}>${month}</option>`;
-                                        }).join('')}
-                                </select>
+                        <!-- Cards de relatórios -->
+                        <div class="report-cards">
+                            <!-- Relatório de Estoque Atual -->
+                            <div class="report-card">
+                                <div class="report-icon" style="background: #3498db">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <h3>Estoque Atual</h3>
+                                <p>Lista completa de todos os produtos com suas quantidades atuais e categorias.</p>
+                                <button id="stockReportBtn" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label>Ano</label>
-                                <select id="reportYear">
-                                    ${[2024,2025,2026,2027,2028].map(y => 
-                                        `<option value="${y}" ${state.reportYear === y.toString() ? 'selected' : ''}>${y}</option>`
-                                    ).join('')}
-                                </select>
+                            
+                            <!-- Relatório de Entradas por Período -->
+                            <div class="report-card">
+                                <div class="report-icon" style="background: #27ae60">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <h3>Entradas por Período</h3>
+                                <p>Lista todas as entradas de produtos em um intervalo de datas.</p>
+                                
+                                <div class="date-range">
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label>Data Inicial</label>
+                                        <input type="date" id="entriesStartDate" value="${state.reportStartDate}">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label>Data Final</label>
+                                        <input type="date" id="entriesEndDate" value="${state.reportEndDate}">
+                                    </div>
+                                </div>
+                                
+                                <button id="entriesReportBtn" class="btn btn-success" style="width: 100%;">
+                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button id="generatePdf" class="btn btn-primary">
-                                    <i class="fas fa-file-pdf"></i> Gerar PDF
+                            
+                            <!-- Relatório de Saídas por Período -->
+                            <div class="report-card">
+                                <div class="report-icon" style="background: #e74c3c">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <h3>Saídas por Período</h3>
+                                <p>Lista todas as saídas de produtos em um intervalo de datas.</p>
+                                
+                                <div class="date-range">
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label>Data Inicial</label>
+                                        <input type="date" id="exitsStartDate" value="${state.reportStartDate}">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label>Data Final</label>
+                                        <input type="date" id="exitsEndDate" value="${state.reportEndDate}">
+                                    </div>
+                                </div>
+                                
+                                <button id="exitsReportBtn" class="btn btn-danger" style="width: 100%;">
+                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
                                 </button>
                             </div>
                         </div>
-
-                        <div id="pdfPreview" class="pdf-preview ${state.showPdfPreview ? 'active' : ''}">
-                            ${state.showPdfPreview ? `
-                                <div class="pdf-header">
-                                    <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" class="pdf-logo">
-                                    <h1 class="pdf-title">Relatório de Saídas de Estoque</h1>
-                                    <p class="pdf-subtitle">${getMonthName(state.reportMonth)} de ${state.reportYear}</p>
-                                    <p class="pdf-subtitle">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+                        
+                        <!-- Prévia do relatório -->
+                        ${state.reportData && state.reportData.length > 0 ? `
+                            <div class="report-preview">
+                                <div class="report-header">
+                                    <h3>
+                                        ${state.reportType === 'estoque' ? '📊 Prévia - Estoque Atual' : 
+                                          state.reportType === 'entradas' ? '📥 Prévia - Entradas no Período' : 
+                                          '📤 Prévia - Saídas no Período'}
+                                    </h3>
+                                    <button id="downloadReportPDF" class="btn btn-primary">
+                                        <i class="fas fa-download"></i> Baixar PDF
+                                    </button>
                                 </div>
                                 
-                                ${state.pdfData.length === 0 ? `
-                                    <div class="empty-state">
-                                        <p>Nenhuma movimentação no período</p>
-                                    </div>
-                                ` : `
+                                ${state.reportType === 'estoque' ? `
                                     <div class="table-container">
                                         <table>
                                             <thead>
                                                 <tr>
                                                     <th>Produto</th>
                                                     <th>Categoria</th>
-                                                    <th>Quantidade</th>
-                                                    <th>Última Saída</th>
+                                                    <th>Estoque Atual</th>
+                                                    <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${state.pdfData.map(item => `
+                                                ${state.reportData.map(item => {
+                                                    const status = getStockStatus(item.estoque);
+                                                    return `
+                                                        <tr>
+                                                            <td>${item.produto}</td>
+                                                            <td>
+                                                                <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
+                                                                ${item.categoria}
+                                                            </td>
+                                                            <td class="${status.class}">${item.estoque}</td>
+                                                            <td><span class="badge ${status.badge}">${status.text}</span></td>
+                                                        </tr>
+                                                    `;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : `
+                                    <div class="table-container">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Produto</th>
+                                                    <th>Quantidade</th>
+                                                    <th>Responsável</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${state.reportData.map(item => `
                                                     <tr>
+                                                        <td>${formatDate(item.data)}</td>
                                                         <td>${item.produto}</td>
-                                                        <td>${item.categoria}</td>
                                                         <td>${item.quantidade}</td>
-                                                        <td>${formatDate(item.ultimaData)}</td>
+                                                        <td>${item.operador || '-'}</td>
                                                     </tr>
                                                 `).join('')}
                                             </tbody>
-                                            <tfoot>
-                                                <tr class="total-row">
-                                                    <td colspan="2">TOTAL</td>
-                                                    <td>${state.pdfData.reduce((acc, i) => acc + i.quantidade, 0)}</td>
-                                                    <td>${state.pdfData.length} produtos</td>
-                                                </tr>
-                                            </tfoot>
                                         </table>
                                     </div>
-                                    
-                                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                        <button id="downloadPdf" class="btn btn-success">
-                                            <i class="fas fa-download"></i> Baixar PDF
-                                        </button>
-                                        <button id="printPdf" class="btn btn-primary">
-                                            <i class="fas fa-print"></i> Imprimir
-                                        </button>
-                                    </div>
                                 `}
-                            ` : ''}
-                        </div>
+                                
+                                <div style="margin-top: 20px; text-align: right; color: var(--gray);">
+                                    <small>Total de registros: ${state.reportData.length}</small>
+                                </div>
+                            </div>
+                        ` : state.reportType ? `
+                            <div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <h3>Nenhum dado encontrado</h3>
+                                <p>Não há registros para o período selecionado.</p>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
 
-                document.getElementById('generatePdf')?.addEventListener('click', generatePdfPreview);
-                document.getElementById('downloadPdf')?.addEventListener('click', generatePdfDownload);
-                document.getElementById('printPdf')?.addEventListener('click', () => window.print());
-            }
-
-            function generatePdfPreview() {
-                const month = document.getElementById('reportMonth').value;
-                const year = document.getElementById('reportYear').value;
+                // Event listeners dos botões
+                document.getElementById('stockReportBtn')?.addEventListener('click', generateStockReport);
                 
-                state.reportMonth = month;
-                state.reportYear = year;
-                
-                const monthMovements = state.movements.filter(m => {
-                    try {
-                        const date = new Date(m.data);
-                        return date.getMonth() + 1 === parseInt(month) && 
-                               date.getFullYear() === parseInt(year) &&
-                               m.tipo === 'saida';
-                    } catch { return false; }
-                });
-
-                if (monthMovements.length === 0) {
-                    state.pdfData = [];
-                    state.showPdfPreview = true;
-                    renderRelatorios();
-                    showToast('Nenhuma saída no período', 'warning');
-                    return;
-                }
-
-                const grouped = {};
-                monthMovements.forEach(m => {
-                    if (!grouped[m.produto]) {
-                        grouped[m.produto] = {
-                            produto: m.produto,
-                            categoria: m.categoria,
-                            quantidade: 0,
-                            ultimaData: m.data
-                        };
-                    }
-                    grouped[m.produto].quantidade += m.quantidade;
-                    if (new Date(m.data) > new Date(grouped[m.produto].ultimaData)) {
-                        grouped[m.produto].ultimaData = m.data;
+                document.getElementById('entriesReportBtn')?.addEventListener('click', () => {
+                    const startDate = document.getElementById('entriesStartDate').value;
+                    const endDate = document.getElementById('entriesEndDate').value;
+                    
+                    if (startDate && endDate) {
+                        if (new Date(startDate) > new Date(endDate)) {
+                            showToast('Data inicial não pode ser maior que data final', 'error');
+                            return;
+                        }
+                        
+                        state.reportStartDate = startDate;
+                        state.reportEndDate = endDate;
+                        generateEntriesReport();
+                    } else {
+                        showToast('Selecione as datas inicial e final', 'warning');
                     }
                 });
-
-                state.pdfData = Object.values(grouped).sort((a, b) => b.quantidade - a.quantidade);
-                state.showPdfPreview = true;
-                renderRelatorios();
-                showToast('Relatório gerado!');
-            }
-
-            function generatePdfDownload() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
                 
-                doc.setFontSize(20);
-                doc.text('Relatório de Saídas de Estoque', 105, 20, { align: 'center' });
-                doc.setFontSize(14);
-                doc.text(`${getMonthName(state.reportMonth)} de ${state.reportYear}`, 105, 30, { align: 'center' });
-                
-                let y = 50;
-                state.pdfData.forEach(item => {
-                    if (y > 280) {
-                        doc.addPage();
-                        y = 20;
+                document.getElementById('exitsReportBtn')?.addEventListener('click', () => {
+                    const startDate = document.getElementById('exitsStartDate').value;
+                    const endDate = document.getElementById('exitsEndDate').value;
+                    
+                    if (startDate && endDate) {
+                        if (new Date(startDate) > new Date(endDate)) {
+                            showToast('Data inicial não pode ser maior que data final', 'error');
+                            return;
+                        }
+                        
+                        state.reportStartDate = startDate;
+                        state.reportEndDate = endDate;
+                        generateExitsReport();
+                    } else {
+                        showToast('Selecione as datas inicial e final', 'warning');
                     }
-                    doc.text(item.produto, 20, y);
-                    doc.text(item.categoria, 80, y);
-                    doc.text(item.quantidade.toString(), 140, y);
-                    doc.text(formatDate(item.ultimaData), 170, y);
-                    y += 10;
                 });
                 
-                doc.save(`relatorio_${state.reportMonth}_${state.reportYear}.pdf`);
-                showToast('PDF gerado!');
+                document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
             }
 
             // ==================== MODAL ====================
