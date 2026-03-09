@@ -1,7 +1,0 @@
-{
-  "name": "controle-estoque",
-  "version": "1.0.0",
-  "scripts": {
-    "vercel-build": "echo 'Static site'"
-  }
-}
