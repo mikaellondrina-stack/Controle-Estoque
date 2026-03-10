@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porter - Controle de Estoque</title>
+    <title>Porter - Controle de Estoque Universal</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -631,8 +631,8 @@
         <!-- Loading Screen -->
         <div id="loadingScreen" class="loading-screen">
             <div class="loader"></div>
-            <p>Carregando sistema...</p>
-            <p style="font-size: 12px; margin-top: 10px;" id="loadingMessage">Inicializando...</p>
+            <p>Carregando sistema universal...</p>
+            <p style="font-size: 12px; margin-top: 10px;" id="loadingMessage">Conectando ao Firebase...</p>
         </div>
 
         <!-- Login Screen -->
@@ -640,7 +640,7 @@
             <div class="login-card">
                 <div class="login-header">
                     <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" alt="Porter" class="login-logo">
-                    <h2>Controle de Estoque</h2>
+                    <h2>Controle de Estoque Universal</h2>
                     <p>Faça login para acessar</p>
                 </div>
                 
@@ -663,7 +663,7 @@
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--gray);">
                     <p>Admin: admin@porter.com.br / admin123</p>
                     <p>Usuário: user@porter.com.br / user123</p>
-                    <p id="firebaseStatus">Conectando ao Firebase...</p>
+                    <p id="firebaseStatus" style="color: var(--success);">✅ Conectando...</p>
                 </div>
             </div>
         </div>
@@ -674,13 +674,13 @@
                 <div class="container header-content">
                     <div class="logo">
                         <img src="https://managing-azure-iu7mo6meja.edgeone.dev/Porter_Horizontal_Preto__1__page-0001-removebg-preview.png" alt="Porter">
-                        <h1>Controle de Estoque</h1>
+                        <h1>Controle de Estoque Universal</h1>
                     </div>
                     <div class="user-info">
                         <span id="userEmail"></span>
                         <span id="userProfile" class="profile-badge">usuario</span>
                         <span id="connectionStatus" class="connection-status online">
-                            <i class="fas fa-circle"></i> Conectado
+                            <i class="fas fa-circle"></i> Sincronizado
                         </span>
                         <button id="logoutBtn" class="btn btn-danger btn-sm">
                             <i class="fas fa-sign-out-alt"></i> Sair
@@ -732,8 +732,8 @@
 
             <footer>
                 <div class="container">
-                    <p>Sistema de Controle de Estoque Porter © 2026</p>
-                    <p><i class="fas fa-database"></i> Modo: <span id="modeStatus">Carregando...</span></p>
+                    <p>Sistema de Controle de Estoque Universal Porter © 2026</p>
+                    <p><i class="fas fa-globe"></i> 100% sincronizado em tempo real</p>
                 </div>
             </footer>
         </div>
@@ -761,616 +761,575 @@
     </div>
 
     <script>
-        (function() {
-            // ==================== CONFIGURAÇÃO FIREBASE ====================
-            const firebaseConfig = {
-                apiKey: "AIzaSyD27wo1fLQLr__WsqKrDmw_kpMr8QXk4gE",
-                authDomain: "controle-estoque-porter.firebaseapp.com",
-                projectId: "controle-estoque-porter",
-                storageBucket: "controle-estoque-porter.firebasestorage.app",
-                messagingSenderId: "48491952679",
-                appId: "1:48491952679:web:22d3702f089e8584abac02"
-            };
+        // ==================== CONFIGURAÇÃO FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD27wo1fLQLr__WsqKrDmw_kpMr8QXk4gE",
+            authDomain: "controle-estoque-porter.firebaseapp.com",
+            projectId: "controle-estoque-porter",
+            storageBucket: "controle-estoque-porter.firebasestorage.app",
+            messagingSenderId: "48491952679",
+            appId: "1:48491952679:web:22d3702f089e8584abac02"
+        };
 
-            // ==================== DADOS INICIAIS ====================
-            const operadores = [
-                "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
-                "LUCAS VINICIUS DA SILVA", "CARLOS HENRIQUE FERREIRA LEITE", "LUIZ FERNANDO S MORYAMA DOS SANTOS",
-                "ERICK DE SOUZA RODRIGUES", "MATHEUS ROBERTO BRASIL SILVA", "WELINGTON FELIPE ALVES BARBOSA",
-                "KAIC VITOR MARTINS DE BRITO", "DEISY SANTOS CRUZ", "DANIELE DA SILVA ROCHA",
-                "ANA BEATRIZ PEREIRA", "LAISSA PEREIRA DOS SANTOS XAVIER", "VANESSA LOPES SOUZA DE OLIVEIRA",
-                "MARIA LUIZA ALEIXO ANTUNES", "MARISA MENEGHETTI", "LUDMILA R CASSIANO",
-                "MARIA GABRIELA ANTONIO", "DENISE CRISTINA DE SOUSA", "EDSON SILVA MACÊDO",
-                "ANA GABRIELLY CORREA FERREIRA", "MARIA CLARA RAMOS", "GABRIELY AMORIM CAMPOS",
-                "SANDRA REGINA DA FRANÇA SILVA", "THAIS BENA LIMA", "ABNER CAVALCANTE",
-                "JOSÉ CARLOS – SUPERVISOR", "MIKAEL – INSTRUTOR"
-            ];
+        // ==================== DADOS INICIAIS ====================
+        const operadores = [
+            "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
+            "LUCAS VINICIUS DA SILVA", "CARLOS HENRIQUE FERREIRA LEITE", "LUIZ FERNANDO S MORYAMA DOS SANTOS",
+            "ERICK DE SOUZA RODRIGUES", "MATHEUS ROBERTO BRASIL SILVA", "WELINGTON FELIPE ALVES BARBOSA",
+            "KAIC VITOR MARTINS DE BRITO", "DEISY SANTOS CRUZ", "DANIELE DA SILVA ROCHA",
+            "ANA BEATRIZ PEREIRA", "LAISSA PEREIRA DOS SANTOS XAVIER", "VANESSA LOPES SOUZA DE OLIVEIRA",
+            "MARIA LUIZA ALEIXO ANTUNES", "MARISA MENEGHETTI", "LUDMILA R CASSIANO",
+            "MARIA GABRIELA ANTONIO", "DENISE CRISTINA DE SOUSA", "EDSON SILVA MACÊDO",
+            "ANA GABRIELLY CORREA FERREIRA", "MARIA CLARA RAMOS", "GABRIELY AMORIM CAMPOS",
+            "SANDRA REGINA DA FRANÇA SILVA", "THAIS BENA LIMA", "ABNER CAVALCANTE",
+            "JOSÉ CARLOS – SUPERVISOR", "MIKAEL – INSTRUTOR"
+        ];
 
-            const produtosIniciais = [
-                { nome: "Café", categoria: "Cozinha" },
-                { nome: "Pano", categoria: "Higiene" },
-                { nome: "Açúcar", categoria: "Cozinha" },
-                { nome: "Papel higiênico", categoria: "Higiene" },
-                { nome: "Papel toalha", categoria: "Limpeza" },
-                { nome: "Filtro de café", categoria: "Cozinha" },
-                { nome: "Saco de lixo", categoria: "Limpeza" },
-                { nome: "Desinfetante", categoria: "Limpeza" },
-                { nome: "Detergente", categoria: "Limpeza" },
-                { nome: "Sabonete líquido", categoria: "Higiene" }
-            ];
+        const produtosIniciais = [
+            { nome: "Café", categoria: "Cozinha" },
+            { nome: "Pano", categoria: "Higiene" },
+            { nome: "Açúcar", categoria: "Cozinha" },
+            { nome: "Papel higiênico", categoria: "Higiene" },
+            { nome: "Papel toalha", categoria: "Limpeza" },
+            { nome: "Filtro de café", categoria: "Cozinha" },
+            { nome: "Saco de lixo", categoria: "Limpeza" },
+            { nome: "Desinfetante", categoria: "Limpeza" },
+            { nome: "Detergente", categoria: "Limpeza" },
+            { nome: "Sabonete líquido", categoria: "Higiene" }
+        ];
 
-            // ==================== ESTADO GLOBAL ====================
-            let state = {
-                user: null,
-                userProfile: null,
-                isAdmin: false,
-                movements: [],
-                produtos: [],
-                currentStock: [],
-                activeTab: 'dashboard',
-                currentPage: 1,
-                itemsPerPage: 15,
-                firebaseAvailable: false,
-                
-                // Filtros
-                searchHistory: '',
-                filterType: '',
-                filterProduct: '',
-                filterDate: '',
-                searchStock: '',
-                filterCategory: '',
-                
-                // Relatórios
-                reportType: null,
-                reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0],
-                reportEndDate: new Date().toISOString().split('T')[0],
-                reportData: [],
-                
-                formData: {
-                    data: new Date().toISOString().split('T')[0],
-                    hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
-                    operador: '',
-                    produto: '',
-                    categoria: 'Limpeza',
-                    quantidade: 1,
-                    tipo: 'entrada'
+        // ==================== ESTADO GLOBAL ====================
+        window.state = {
+            user: null,
+            userProfile: null,
+            isAdmin: false,
+            movements: [],
+            produtos: [],
+            currentStock: [],
+            activeTab: 'dashboard',
+            currentPage: 1,
+            itemsPerPage: 15,
+            firebaseReady: false,
+            movementsUnsubscribe: null,
+            
+            // Filtros
+            searchHistory: '',
+            filterType: '',
+            filterProduct: '',
+            filterDate: '',
+            searchStock: '',
+            filterCategory: '',
+            
+            // Relatórios
+            reportType: null,
+            reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0],
+            reportEndDate: new Date().toISOString().split('T')[0],
+            reportData: [],
+            
+            formData: {
+                data: new Date().toISOString().split('T')[0],
+                hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                operador: '',
+                produto: '',
+                categoria: 'Limpeza',
+                quantidade: 1,
+                tipo: 'entrada'
+            }
+        };
+
+        // ==================== ELEMENTOS DOM ====================
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userEmail = document.getElementById('userEmail');
+        const userProfile = document.getElementById('userProfile');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const firebaseStatus = document.getElementById('firebaseStatus');
+
+        // ==================== FUNÇÕES AUXILIARES ====================
+        function showToast(msg, type = 'success') {
+            toastMessage.textContent = msg;
+            toast.className = 'toast';
+            if (type === 'success') toast.classList.add('show');
+            else if (type === 'error') toast.classList.add('show', 'error');
+            else if (type === 'warning') toast.classList.add('show', 'warning');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function formatDate(dateStr) {
+            try {
+                return new Date(dateStr).toLocaleDateString('pt-BR');
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function getMonthName(month) {
+            const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            return months[parseInt(month)-1] || month;
+        }
+
+        function getStockStatus(estoque) {
+            if (estoque <= 5) return { text: 'Crítico', class: 'stock-critical', badge: 'badge-danger' };
+            if (estoque <= 15) return { text: 'Baixo', class: 'stock-low', badge: 'badge-warning' };
+            return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
+        }
+
+        // ==================== RECALCULAR ESTOQUE ====================
+        function recalcularEstoque() {
+            const stockMap = {};
+            
+            window.state.movements.forEach(mov => {
+                if (!stockMap[mov.produto]) {
+                    stockMap[mov.produto] = {
+                        produto: mov.produto,
+                        categoria: mov.categoria,
+                        entradas: 0,
+                        saidas: 0,
+                        estoque: 0
+                    };
                 }
-            };
-
-            // ==================== ELEMENTOS DOM ====================
-            const loadingScreen = document.getElementById('loadingScreen');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const loginScreen = document.getElementById('loginScreen');
-            const mainApp = document.getElementById('mainApp');
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            const confirmModal = document.getElementById('confirmModal');
-            const confirmMessage = document.getElementById('confirmMessage');
-            const confirmYes = document.getElementById('confirmYes');
-            const confirmNo = document.getElementById('confirmNo');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const userEmail = document.getElementById('userEmail');
-            const userProfile = document.getElementById('userProfile');
-            const connectionStatus = document.getElementById('connectionStatus');
-            const modeStatus = document.getElementById('modeStatus');
-            const firebaseStatus = document.getElementById('firebaseStatus');
-
-            // ==================== FUNÇÕES AUXILIARES ====================
-            function showToast(msg, type = 'success') {
-                toastMessage.textContent = msg;
-                toast.className = 'toast';
-                if (type === 'success') toast.classList.add('show');
-                else if (type === 'error') toast.classList.add('show', 'error');
-                else if (type === 'warning') toast.classList.add('show', 'warning');
-                setTimeout(() => toast.classList.remove('show'), 3000);
-            }
-
-            function formatDate(dateStr) {
-                try {
-                    const [year, month, day] = dateStr.split('-');
-                    return `${day}/${month}/${year}`;
-                } catch {
-                    return dateStr;
-                }
-            }
-
-            function parseDateBR(dateStr) {
-                try {
-                    const [day, month, year] = dateStr.split('/');
-                    return `${year}-${month}-${day}`;
-                } catch {
-                    return dateStr;
-                }
-            }
-
-            function getMonthName(month) {
-                const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-                return months[parseInt(month)-1] || month;
-            }
-
-            function getStockStatus(estoque) {
-                if (estoque <= 5) return { text: 'Crítico', class: 'stock-critical', badge: 'badge-danger' };
-                if (estoque <= 15) return { text: 'Baixo', class: 'stock-low', badge: 'badge-warning' };
-                return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
-            }
-
-            // ==================== DADOS LOCAIS (FALLBACK) ====================
-            function loadLocalData() {
-                const saved = localStorage.getItem('controle_estoque_offline');
-                if (saved) {
-                    try {
-                        const data = JSON.parse(saved);
-                        state.movements = data.movements || [];
-                        state.produtos = data.produtos || produtosIniciais;
-                        console.log('Dados carregados do localStorage:', state.movements.length, 'movimentos');
-                    } catch (e) {
-                        console.error('Erro ao carregar dados locais:', e);
-                        useInitialData();
-                    }
+                
+                if (mov.tipo === 'entrada') {
+                    stockMap[mov.produto].entradas += mov.quantidade;
+                    stockMap[mov.produto].estoque += mov.quantidade;
                 } else {
-                    useInitialData();
+                    stockMap[mov.produto].saidas += mov.quantidade;
+                    stockMap[mov.produto].estoque -= mov.quantidade;
+                }
+            });
+
+            window.state.produtos.forEach(prod => {
+                if (!stockMap[prod.nome]) {
+                    stockMap[prod.nome] = {
+                        produto: prod.nome,
+                        categoria: prod.categoria,
+                        entradas: 0,
+                        saidas: 0,
+                        estoque: 0
+                    };
+                }
+            });
+
+            window.state.currentStock = Object.values(stockMap);
+        }
+
+        // ==================== CARREGAR DADOS DO FIREBASE ====================
+        async function carregarDadosIniciaisFirebase() {
+            const db = firebase.firestore();
+            
+            try {
+                // Carregar produtos
+                const produtosSnapshot = await db.collection('produtos').get();
+                if (!produtosSnapshot.empty) {
+                    window.state.produtos = produtosSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                } else {
+                    // Criar produtos iniciais no Firebase
+                    const batch = db.batch();
+                    produtosIniciais.forEach(produto => {
+                        const docRef = db.collection('produtos').doc();
+                        batch.set(docRef, produto);
+                    });
+                    await batch.commit();
+                    window.state.produtos = produtosIniciais;
+                }
+                
+                // Carregar movimentações (as últimas 100 para performance)
+                const movementsSnapshot = await db.collection('movimentacoes')
+                    .orderBy('data', 'desc')
+                    .orderBy('hora', 'desc')
+                    .limit(100)
+                    .get();
+                
+                if (!movementsSnapshot.empty) {
+                    window.state.movements = movementsSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
                 }
                 
                 recalcularEstoque();
-            }
-
-            function useInitialData() {
-                // TODAS AS SUAS MOVIMENTAÇÕES PRESERVADAS
-                state.movements = [
-                    // Entradas de 08/03
-                    { id: '101', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Desinfetante', categoria: 'Limpeza', quantidade: 1, tipo: 'entrada' },
-                    { id: '102', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                    { id: '103', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 8, tipo: 'entrada' },
-                    { id: '104', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                    { id: '105', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'entrada' },
-                    
-                    // Saídas de 07/03
-                    { id: '106', data: '2026-03-07', hora: '21:00', operador: 'LUCAS VINICIUS DA SILVA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '107', data: '2026-03-07', hora: '14:55', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 4, tipo: 'saida' },
-                    { id: '108', data: '2026-03-07', hora: '10:30', operador: 'MARIA GABRIELA ANTONIO', produto: 'Detergente', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '109', data: '2026-03-07', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                    { id: '110', data: '2026-03-07', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                    
-                    // Saídas de 06/03
-                    { id: '111', data: '2026-03-06', hora: '16:27', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '112', data: '2026-03-06', hora: '14:40', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '113', data: '2026-03-06', hora: '13:12', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 2, tipo: 'saida' },
-                    { id: '114', data: '2026-03-06', hora: '07:00', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '115', data: '2026-03-06', hora: '05:22', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    
-                    // Saídas de 05/03
-                    { id: '116', data: '2026-03-05', hora: '18:59', operador: 'ANA BEATRIZ PEREIRA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '117', data: '2026-03-05', hora: '18:15', operador: 'ANA BEATRIZ PEREIRA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '118', data: '2026-03-05', hora: '10:51', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                    
-                    // Saídas de 04/03
-                    { id: '119', data: '2026-03-04', hora: '14:30', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 3, tipo: 'saida' },
-                    { id: '120', data: '2026-03-04', hora: '13:20', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                    { id: '121', data: '2026-03-04', hora: '13:17', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '122', data: '2026-03-04', hora: '06:03', operador: 'MIKAEL – INSTRUTOR', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    
-                    // Saídas de 03/03
-                    { id: '123', data: '2026-03-03', hora: '21:35', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
-                    { id: '124', data: '2026-03-03', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
-                    { id: '125', data: '2026-03-03', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
-                    { id: '126', data: '2026-03-03', hora: '15:00', operador: 'MARISA MENEGHETTI', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    
-                    // Entradas de 28/02
-                    { id: '127', data: '2026-02-28', hora: '08:00', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
-                    { id: '128', data: '2026-02-28', hora: '10:00', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                    { id: '129', data: '2026-02-28', hora: '08:30', operador: 'CARLOS HENRIQUE FERREIRA LEITE', produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
-                    { id: '130', data: '2026-02-28', hora: '09:15', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
-                    { id: '131', data: '2026-02-28', hora: '11:30', operador: 'MATHEUS ROBERTO BRASIL SILVA', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
-                    { id: '132', data: '2026-02-28', hora: '14:00', operador: 'KAIC VITOR MARTINS DE BRITO', produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
-                    { id: '133', data: '2026-02-28', hora: '15:00', operador: 'DEISY SANTOS CRUZ', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                    { id: '134', data: '2026-02-28', hora: '16:00', operador: 'DANIELE DA SILVA ROCHA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
-                    { id: '135', data: '2026-02-28', hora: '08:45', operador: 'ANA BEATRIZ PEREIRA', produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' },
-                    
-                    // Saídas de 01/03
-                    { id: '136', data: '2026-03-01', hora: '09:00', operador: 'VANIA DO SOCORRO LEOCADIO', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { id: '137', data: '2026-03-01', hora: '11:00', operador: 'LUCAS VINICIUS DA SILVA', produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { id: '138', data: '2026-03-01', hora: '10:45', operador: 'ERICK DE SOUZA RODRIGUES', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
-                    { id: '139', data: '2026-03-01', hora: '13:00', operador: 'WELINGTON FELIPE ALVES BARBOSA', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' }
-                ];
+                console.log('✅ Dados carregados do Firebase');
                 
-                state.produtos = produtosIniciais;
-                console.log('Dados iniciais carregados:', state.movements.length, 'movimentos');
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showToast('Erro ao carregar dados do Firebase', 'error');
             }
+        }
 
-            function saveLocalData() {
-                localStorage.setItem('controle_estoque_offline', JSON.stringify({
-                    movements: state.movements,
-                    produtos: state.produtos
-                }));
+        // ==================== LISTENER EM TEMPO REAL ====================
+        function iniciarListenerTempoReal() {
+            const db = firebase.firestore();
+            
+            // Cancelar listener anterior se existir
+            if (window.state.movementsUnsubscribe) {
+                window.state.movementsUnsubscribe();
             }
-
-            // ==================== RECALCULAR ESTOQUE ====================
-            function recalcularEstoque() {
-                const stockMap = {};
-                
-                state.movements.forEach(mov => {
-                    if (!stockMap[mov.produto]) {
-                        stockMap[mov.produto] = {
-                            produto: mov.produto,
-                            categoria: mov.categoria,
-                            entradas: 0,
-                            saidas: 0,
-                            estoque: 0
-                        };
-                    }
-                    
-                    if (mov.tipo === 'entrada') {
-                        stockMap[mov.produto].entradas += mov.quantidade;
-                        stockMap[mov.produto].estoque += mov.quantidade;
-                    } else {
-                        stockMap[mov.produto].saidas += mov.quantidade;
-                        stockMap[mov.produto].estoque -= mov.quantidade;
-                    }
-                });
-
-                state.produtos.forEach(prod => {
-                    if (!stockMap[prod.nome]) {
-                        stockMap[prod.nome] = {
-                            produto: prod.nome,
-                            categoria: prod.categoria,
-                            entradas: 0,
-                            saidas: 0,
-                            estoque: 0
-                        };
-                    }
-                });
-
-                state.currentStock = Object.values(stockMap);
-                console.log('Estoque recalculado:', state.currentStock);
-            }
-
-            // ==================== INICIALIZAÇÃO CORRIGIDA ====================
-            function initializeApp() {
-                loadingMessage.textContent = 'Carregando dados...';
-                
-                // Primeiro, carregar dados locais para garantir que algo apareça
-                loadLocalData();
-                
-                // Tentar conectar ao Firebase (opcional, não crítico)
-                try {
-                    loadingMessage.textContent = 'Conectando ao Firebase...';
-                    firebase.initializeApp(firebaseConfig);
-                    const db = firebase.firestore();
-                    
-                    // CORREÇÃO 1: Configurar persistência offline com multi-tab
-                    db.enablePersistence({ experimentalForceOwningTab: true })
-                        .then(() => {
-                            console.log('Persistência offline habilitada');
-                        })
-                        .catch((err) => {
-                            console.log('Persistência offline não disponível (não crítico):', err.message);
-                        });
-                    
-                    // Tentar login automático (opcional)
-                    firebase.auth().signInWithEmailAndPassword('admin@porter.com.br', 'admin123')
-                        .then((userCredential) => {
-                            console.log('Login Firebase:', userCredential.user.email);
-                            state.firebaseAvailable = true;
-                            
-                            if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase conectado';
-                            if (modeStatus) modeStatus.innerHTML = 'Online (Firebase)';
-                            if (connectionStatus) {
-                                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
-                                connectionStatus.className = 'connection-status online';
+            
+            // Listener para movimentações
+            window.state.movementsUnsubscribe = db.collection('movimentacoes')
+                .orderBy('data', 'desc')
+                .orderBy('hora', 'desc')
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        const mov = { id: change.doc.id, ...change.doc.data() };
+                        
+                        if (change.type === 'added') {
+                            // Verificar se já não existe
+                            if (!window.state.movements.some(m => m.id === mov.id)) {
+                                window.state.movements.unshift(mov);
+                                showToast(`🔄 Nova movimentação: ${mov.produto}`, 'success');
                             }
-                        })
-                        .catch((error) => {
-                            console.log('Login Firebase não disponível (modo offline):', error.message);
-                            state.firebaseAvailable = false;
-                            if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline';
-                            if (modeStatus) modeStatus.innerHTML = 'Offline (dados locais)';
-                        });
+                        } else if (change.type === 'modified') {
+                            const index = window.state.movements.findIndex(m => m.id === mov.id);
+                            if (index !== -1) {
+                                window.state.movements[index] = mov;
+                            }
+                        } else if (change.type === 'removed') {
+                            window.state.movements = window.state.movements.filter(m => m.id !== mov.id);
+                        }
+                    });
                     
-                } catch (e) {
-                    console.log('Firebase não disponível, modo offline:', e.message);
-                    state.firebaseAvailable = false;
-                    if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline';
-                    if (modeStatus) modeStatus.innerHTML = 'Offline (dados locais)';
+                    recalcularEstoque();
+                    
+                    // Atualizar interface se necessário
+                    if (window.state.activeTab === 'historico') renderHistorico();
+                    if (window.state.activeTab === 'estoque') renderEstoque();
+                    if (window.state.activeTab === 'dashboard') renderDashboard();
+                    
+                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Sincronizado';
+                    connectionStatus.className = 'connection-status online';
+                    
+                }, (error) => {
+                    console.error('Erro no listener:', error);
+                    connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Erro de sincronia';
+                    connectionStatus.className = 'connection-status offline';
+                });
+            
+            // Listener para produtos
+            db.collection('produtos').onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added' || change.type === 'modified') {
+                        // Atualizar lista de produtos
+                        carregarDadosIniciaisFirebase();
+                    }
+                });
+            });
+        }
+
+        // ==================== LOGIN ====================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                loadingMessage.textContent = 'Autenticando...';
+                
+                // Login no Firebase
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Verificar perfil
+                const db = firebase.firestore();
+                const perfilDoc = await db.collection('usuarios').doc(user.uid).get();
+                
+                if (perfilDoc.exists) {
+                    window.state.isAdmin = perfilDoc.data().perfil === 'admin';
+                } else {
+                    // Criar perfil se não existir
+                    await db.collection('usuarios').doc(user.uid).set({
+                        email: user.email,
+                        perfil: email.includes('admin') ? 'admin' : 'usuario',
+                        nome: email.split('@')[0],
+                        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    window.state.isAdmin = email.includes('admin');
                 }
                 
-                // Sempre mostrar a tela de login após carregar
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    loginScreen.style.display = 'flex';
-                }, 1500);
-            }
-
-            // ==================== LOGIN ====================
-            document.getElementById('loginForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
+                window.state.user = user;
+                userEmail.textContent = user.email;
+                userProfile.textContent = window.state.isAdmin ? 'admin' : 'usuario';
                 
-                // Autenticação simples (mantida igual)
-                if (email === 'admin@porter.com.br' && password === 'admin123') {
-                    state.user = { email: 'admin@porter.com.br' };
-                    state.isAdmin = true;
-                    userEmail.textContent = 'admin@porter.com.br';
-                    userProfile.textContent = 'admin';
-                    
+                if (window.state.isAdmin) {
                     document.querySelectorAll('.admin-only').forEach(el => {
                         el.style.display = 'block';
                     });
-                    
-                    loginScreen.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    
-                    renderCurrentTab();
-                    showToast(`Login realizado! Modo: ${state.firebaseAvailable ? 'Online' : 'Offline'}`);
-                    
-                } else if (email === 'user@porter.com.br' && password === 'user123') {
-                    state.user = { email: 'user@porter.com.br' };
-                    state.isAdmin = false;
-                    userEmail.textContent = 'user@porter.com.br';
-                    userProfile.textContent = 'usuario';
-                    
-                    loginScreen.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    
-                    renderCurrentTab();
-                    showToast(`Login realizado! Modo: ${state.firebaseAvailable ? 'Online' : 'Offline'}`);
-                    
-                } else {
-                    showToast('E-mail ou senha inválidos', 'error');
                 }
-            });
-
-            // ==================== LOGOUT ====================
-            logoutBtn.addEventListener('click', () => {
-                state.user = null;
-                state.isAdmin = false;
-                mainApp.style.display = 'none';
-                loginScreen.style.display = 'flex';
-                document.getElementById('loginForm').reset();
-            });
-
-            // ==================== RENDERIZAÇÃO ====================
-            function renderCurrentTab() {
-                switch(state.activeTab) {
-                    case 'dashboard': renderDashboard(); break;
-                    case 'movimentacao': renderMovimentacao(); break;
-                    case 'historico': renderHistorico(); break;
-                    case 'estoque': renderEstoque(); break;
-                    case 'relatorios': renderRelatorios(); break;
-                }
+                
+                // Carregar dados do Firebase
+                await carregarDadosIniciaisFirebase();
+                
+                // Iniciar listener em tempo real
+                iniciarListenerTempoReal();
+                
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                
+                renderCurrentTab();
+                showToast('✅ Login realizado! Sistema sincronizado em tempo real.');
+                
+                if (firebaseStatus) firebaseStatus.innerHTML = '✅ Conectado ao Firebase';
+                
+            } catch (error) {
+                console.error('Erro no login:', error);
+                showToast('Erro: ' + error.message, 'error');
             }
+        });
 
-            // ==================== DASHBOARD ====================
-            function renderDashboard() {
-                const dashboard = document.getElementById('dashboard');
-                
-                const totalProdutos = state.currentStock.filter(p => p.estoque > 0).length;
-                const totalEntradas = state.movements.filter(m => {
-                    try {
-                        const date = new Date(m.data);
-                        return date.getMonth() === new Date().getMonth() && m.tipo === 'entrada';
-                    } catch { return false; }
-                }).reduce((acc, m) => acc + m.quantidade, 0);
-                
-                const totalSaidas = state.movements.filter(m => {
-                    try {
-                        const date = new Date(m.data);
-                        return date.getMonth() === new Date().getMonth() && m.tipo === 'saida';
-                    } catch { return false; }
-                }).reduce((acc, m) => acc + m.quantidade, 0);
-                
-                const lowStockItems = state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
+        // ==================== LOGOUT ====================
+        logoutBtn.addEventListener('click', () => {
+            firebase.auth().signOut();
+            if (window.state.movementsUnsubscribe) {
+                window.state.movementsUnsubscribe();
+            }
+            window.state.user = null;
+            window.state.isAdmin = false;
+            mainApp.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            document.getElementById('loginForm').reset();
+        });
 
-                dashboard.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Visão Geral do Estoque</h2>
-                        <div class="stats-cards">
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #3498db">
-                                    <i class="fas fa-boxes"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h3>${totalProdutos}</h3>
-                                    <p>Produtos em estoque</p>
-                                </div>
+        // ==================== RENDERIZAÇÃO ====================
+        function renderCurrentTab() {
+            switch(window.state.activeTab) {
+                case 'dashboard': renderDashboard(); break;
+                case 'movimentacao': renderMovimentacao(); break;
+                case 'historico': renderHistorico(); break;
+                case 'estoque': renderEstoque(); break;
+                case 'relatorios': renderRelatorios(); break;
+            }
+        }
+
+        // ==================== DASHBOARD ====================
+        function renderDashboard() {
+            const dashboard = document.getElementById('dashboard');
+            
+            const totalProdutos = window.state.currentStock.filter(p => p.estoque > 0).length;
+            const totalEntradas = window.state.movements.filter(m => {
+                try {
+                    const date = new Date(m.data);
+                    return date.getMonth() === new Date().getMonth() && m.tipo === 'entrada';
+                } catch { return false; }
+            }).reduce((acc, m) => acc + m.quantidade, 0);
+            
+            const totalSaidas = window.state.movements.filter(m => {
+                try {
+                    const date = new Date(m.data);
+                    return date.getMonth() === new Date().getMonth() && m.tipo === 'saida';
+                } catch { return false; }
+            }).reduce((acc, m) => acc + m.quantidade, 0);
+            
+            const lowStockItems = window.state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
+
+            dashboard.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">Visão Geral do Estoque</h2>
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #3498db">
+                                <i class="fas fa-boxes"></i>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #27ae60">
-                                    <i class="fas fa-arrow-down"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h3>${totalEntradas}</h3>
-                                    <p>Entradas este mês</p>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #e74c3c">
-                                    <i class="fas fa-arrow-up"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <h3>${totalSaidas}</h3>
-                                    <p>Saídas este mês</p>
-                                </div>
+                            <div class="stat-info">
+                                <h3>${totalProdutos}</h3>
+                                <p>Produtos em estoque</p>
                             </div>
                         </div>
-
-                        <h3 class="card-title">Produtos com Baixo Estoque</h3>
-                        ${lowStockItems.length === 0 ? `
-                            <div class="empty-state">
-                                <i class="fas fa-check-circle"></i>
-                                <h3>Todos os produtos têm estoque adequado</h3>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #27ae60">
+                                <i class="fas fa-arrow-down"></i>
                             </div>
-                        ` : `
-                            <div class="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Produto</th>
-                                            <th>Categoria</th>
-                                            <th>Estoque Atual</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${lowStockItems.map(item => {
-                                            const status = item.estoque <= 5 ? 'Crítico' : 'Baixo';
-                                            return `
-                                                <tr>
-                                                    <td>${item.produto}</td>
-                                                    <td>
-                                                        <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
-                                                        ${item.categoria}
-                                                    </td>
-                                                    <td class="${item.estoque <= 5 ? 'stock-critical' : 'stock-low'}">${item.estoque}</td>
-                                                    <td><span class="badge badge-danger">${status}</span></td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
+                            <div class="stat-info">
+                                <h3>${totalEntradas}</h3>
+                                <p>Entradas este mês</p>
                             </div>
-                        `}
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #e74c3c">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>${totalSaidas}</h3>
+                                <p>Saídas este mês</p>
+                            </div>
+                        </div>
                     </div>
-                `;
-            }
 
-            // ==================== MOVIMENTAÇÃO ====================
-            function renderMovimentacao() {
-                const mov = document.getElementById('movimentacao');
-                
-                mov.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Nova Movimentação de Estoque</h2>
-                        <form id="movementForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Data</label>
-                                    <input type="date" id="movData" value="${state.formData.data}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Hora</label>
-                                    <input type="time" id="movHora" value="${state.formData.hora}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Operador</label>
-                                    <select id="movOperador" required>
-                                        <option value="">Selecione</option>
-                                        ${operadores.map(op => `<option value="${op}">${op}</option>`).join('')}
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Produto</label>
-                                    <select id="movProduto" required>
-                                        <option value="">Selecione</option>
-                                        ${state.produtos.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Categoria</label>
-                                    <select id="movCategoria" required>
-                                        <option value="Limpeza">Limpeza</option>
-                                        <option value="Cozinha">Cozinha</option>
-                                        <option value="Higiene">Higiene</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Quantidade</label>
-                                    <input type="number" id="movQuantidade" min="1" value="1" required>
-                                </div>
-                            </div>
-                            
+                    <h3 class="card-title">Produtos com Baixo Estoque</h3>
+                    ${lowStockItems.length === 0 ? `
+                        <div class="empty-state">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>Todos os produtos têm estoque adequado</h3>
+                        </div>
+                    ` : `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Categoria</th>
+                                        <th>Estoque Atual</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${lowStockItems.map(item => {
+                                        const status = item.estoque <= 5 ? 'Crítico' : 'Baixo';
+                                        return `
+                                            <tr>
+                                                <td>${item.produto}</td>
+                                                <td>
+                                                    <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
+                                                    ${item.categoria}
+                                                </td>
+                                                <td class="${item.estoque <= 5 ? 'stock-critical' : 'stock-low'}">${item.estoque}</td>
+                                                <td><span class="badge badge-danger">${status}</span></td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        // ==================== MOVIMENTAÇÃO ====================
+        function renderMovimentacao() {
+            const mov = document.getElementById('movimentacao');
+            
+            mov.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">Nova Movimentação de Estoque</h2>
+                    <form id="movementForm">
+                        <div class="form-row">
                             <div class="form-group">
-                                <label>Tipo</label>
-                                <div style="display: flex; gap: 20px;">
-                                    <label>
-                                        <input type="radio" name="tipo" value="entrada" checked>
-                                        <span style="color: #27ae60;">Entrada</span>
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="tipo" value="saida">
-                                        <span style="color: #e74c3c;">Saída</span>
-                                    </label>
-                                </div>
+                                <label>Data</label>
+                                <input type="date" id="movData" value="${window.state.formData.data}" required>
                             </div>
-                            
-                            <div style="display: flex; gap: 10px;">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Salvar
-                                </button>
-                                <button type="button" id="clearForm" class="btn btn-warning">
-                                    <i class="fas fa-redo"></i> Limpar
-                                </button>
+                            <div class="form-group">
+                                <label>Hora</label>
+                                <input type="time" id="movHora" value="${window.state.formData.hora}" required>
                             </div>
-                        </form>
-                    </div>
-                `;
+                            <div class="form-group">
+                                <label>Operador</label>
+                                <select id="movOperador" required>
+                                    <option value="">Selecione</option>
+                                    ${operadores.map(op => `<option value="${op}">${op}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Produto</label>
+                                <select id="movProduto" required>
+                                    <option value="">Selecione</option>
+                                    ${window.state.produtos.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="movCategoria" required>
+                                    <option value="Limpeza">Limpeza</option>
+                                    <option value="Cozinha">Cozinha</option>
+                                    <option value="Higiene">Higiene</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <input type="number" id="movQuantidade" min="1" value="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <div style="display: flex; gap: 20px;">
+                                <label>
+                                    <input type="radio" name="tipo" value="entrada" checked>
+                                    <span style="color: #27ae60;">Entrada</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="tipo" value="saida">
+                                    <span style="color: #e74c3c;">Saída</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar e Sincronizar
+                            </button>
+                            <button type="button" id="clearForm" class="btn btn-warning">
+                                <i class="fas fa-redo"></i> Limpar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
 
-                document.getElementById('movementForm').addEventListener('submit', handleSaveMovement);
-                document.getElementById('clearForm').addEventListener('click', () => {
-                    document.getElementById('movData').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
-                    document.getElementById('movProduto').value = '';
-                    document.getElementById('movQuantidade').value = '1';
-                });
+            document.getElementById('movementForm').addEventListener('submit', handleSaveMovement);
+            document.getElementById('clearForm').addEventListener('click', () => {
+                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
+                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
+                document.getElementById('movProduto').value = '';
+                document.getElementById('movQuantidade').value = '1';
+            });
 
-                document.getElementById('movProduto').addEventListener('change', (e) => {
-                    const produto = state.produtos.find(p => p.nome === e.target.value);
-                    if (produto) {
-                        document.getElementById('movCategoria').value = produto.categoria;
-                    }
-                });
+            document.getElementById('movProduto').addEventListener('change', (e) => {
+                const produto = window.state.produtos.find(p => p.nome === e.target.value);
+                if (produto) {
+                    document.getElementById('movCategoria').value = produto.categoria;
+                }
+            });
+        }
+
+        async function handleSaveMovement(e) {
+            e.preventDefault();
+            
+            const movimento = {
+                data: document.getElementById('movData').value,
+                hora: document.getElementById('movHora').value,
+                operador: document.getElementById('movOperador').value,
+                produto: document.getElementById('movProduto').value,
+                categoria: document.getElementById('movCategoria').value,
+                quantidade: parseInt(document.getElementById('movQuantidade').value),
+                tipo: document.querySelector('input[name="tipo"]:checked').value,
+                usuario: window.state.user?.email,
+                userId: window.state.user?.uid,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Verificar estoque para saídas
+            if (movimento.tipo === 'saida') {
+                const stockInfo = window.state.currentStock.find(item => item.produto === movimento.produto);
+                if (stockInfo && stockInfo.estoque < movimento.quantidade) {
+                    showToast(`Estoque insuficiente! Disponível: ${stockInfo.estoque}`, 'error');
+                    return;
+                }
             }
 
-            function handleSaveMovement(e) {
-                e.preventDefault();
+            try {
+                // Salvar no Firebase (fonte da verdade)
+                const db = firebase.firestore();
+                const docRef = await db.collection('movimentacoes').add(movimento);
                 
-                const movimento = {
-                    id: Date.now().toString(),
-                    data: document.getElementById('movData').value,
-                    hora: document.getElementById('movHora').value,
-                    operador: document.getElementById('movOperador').value,
-                    produto: document.getElementById('movProduto').value,
-                    categoria: document.getElementById('movCategoria').value,
-                    quantidade: parseInt(document.getElementById('movQuantidade').value),
-                    tipo: document.querySelector('input[name="tipo"]:checked').value
-                };
-
-                // Verificar estoque para saídas
-                if (movimento.tipo === 'saida') {
-                    const stockInfo = state.currentStock.find(item => item.produto === movimento.produto);
-                    if (stockInfo && stockInfo.estoque < movimento.quantidade) {
-                        showToast(`Estoque insuficiente! Disponível: ${stockInfo.estoque}`, 'error');
-                        return;
-                    }
-                }
-
-                // 1. PRIMEIRO: Salvar LOCALMENTE (seus dados nunca são perdidos)
-                state.movements.unshift(movimento);
-                recalcularEstoque();
-                saveLocalData();
-                
-                showToast('Movimentação registrada!');
-                
-                // 2. DEPOIS: Tentar sincronizar com Firebase (se disponível) - OPCIONAL
-                if (state.firebaseAvailable) {
-                    try {
-                        const db = firebase.firestore();
-                        db.collection('movimentacoes').add({
-                            ...movimento,
-                            sincronizado: new Date().toISOString()
-                        }).catch(err => {
-                            console.log('Erro ao sincronizar com Firebase (não crítico):', err.message);
-                        });
-                    } catch (e) {
-                        console.log('Firebase indisponível para sincronia');
-                    }
-                }
+                showToast('✅ Movimentação sincronizada com todas as máquinas!');
                 
                 // Limpar formulário
                 document.getElementById('movData').value = new Date().toISOString().split('T')[0];
@@ -1380,733 +1339,693 @@
                 
                 // Mudar para aba de histórico
                 switchTab('historico');
+                
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                showToast('Erro ao sincronizar. Tente novamente.', 'error');
             }
+        }
 
-            // ==================== HISTÓRICO ====================
-            function renderHistorico() {
-                const historico = document.getElementById('historico');
-                
-                let filtered = [...state.movements];
-                
-                if (state.searchHistory) {
-                    filtered = filtered.filter(m => 
-                        m.produto.toLowerCase().includes(state.searchHistory.toLowerCase()) ||
-                        (m.operador && m.operador.toLowerCase().includes(state.searchHistory.toLowerCase()))
-                    );
-                }
-                
-                if (state.filterType) {
-                    filtered = filtered.filter(m => m.tipo === state.filterType);
-                }
-                
-                if (state.filterProduct) {
-                    filtered = filtered.filter(m => m.produto === state.filterProduct);
-                }
-                
-                if (state.filterDate) {
-                    filtered = filtered.filter(m => m.data === state.filterDate);
-                }
-
-                // Ordenar por data (mais recente primeiro)
-                filtered.sort((a, b) => new Date(b.data) - new Date(a.data));
-
-                const totalPages = Math.ceil(filtered.length / state.itemsPerPage);
-                const start = (state.currentPage - 1) * state.itemsPerPage;
-                const paginated = filtered.slice(start, start + state.itemsPerPage);
-
-                historico.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Histórico de Movimentações</h2>
-                        
-                        <div class="search-filter">
-                            <input type="text" id="searchHistory" placeholder="Buscar..." value="${state.searchHistory}">
-                            <select id="filterType">
-                                <option value="">Todos os tipos</option>
-                                <option value="entrada" ${state.filterType === 'entrada' ? 'selected' : ''}>Entradas</option>
-                                <option value="saida" ${state.filterType === 'saida' ? 'selected' : ''}>Saídas</option>
-                            </select>
-                            <select id="filterProduct">
-                                <option value="">Todos os produtos</option>
-                                ${state.produtos.map(p => 
-                                    `<option value="${p.nome}" ${state.filterProduct === p.nome ? 'selected' : ''}>${p.nome}</option>`
-                                ).join('')}
-                            </select>
-                            <input type="date" id="filterDate" value="${state.filterDate}">
-                            <button id="clearFilters" class="btn btn-warning">
-                                <i class="fas fa-times"></i> Limpar
-                            </button>
-                            ${state.isAdmin ? `
-                                <button id="exportCsv" class="btn btn-success">
-                                    <i class="fas fa-download"></i> Exportar
-                                </button>
-                            ` : ''}
-                        </div>
-
-                        ${paginated.length === 0 ? `
-                            <div class="empty-state">
-                                <i class="fas fa-history"></i>
-                                <h3>Nenhuma movimentação encontrada</h3>
-                            </div>
-                        ` : `
-                            <div class="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Hora</th>
-                                            <th>Operador</th>
-                                            <th>Produto</th>
-                                            <th>Categoria</th>
-                                            <th>Quantidade</th>
-                                            <th>Tipo</th>
-                                            ${state.isAdmin ? '<th>Ações</th>' : ''}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${paginated.map(m => `
-                                            <tr>
-                                                <td>${formatDate(m.data)}</td>
-                                                <td>${m.hora}</td>
-                                                <td>${m.operador || '-'}</td>
-                                                <td>${m.produto}</td>
-                                                <td>
-                                                    <span class="category-indicator category-${m.categoria.toLowerCase()}"></span>
-                                                    ${m.categoria}
-                                                </td>
-                                                <td>${m.quantidade}</td>
-                                                <td>
-                                                    <span class="badge ${m.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">
-                                                        ${m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-                                                    </span>
-                                                </td>
-                                                ${state.isAdmin ? `
-                                                    <td>
-                                                        <button class="btn btn-danger btn-sm delete-btn" data-id="${m.id}">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </td>
-                                                ` : ''}
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            ${totalPages > 1 ? `
-                                <div class="pagination">
-                                    <button class="page-btn" data-page="${state.currentPage - 1}" ${state.currentPage === 1 ? 'disabled' : ''}>«</button>
-                                    ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
-                                        <button class="page-btn ${p === state.currentPage ? 'active' : ''}" data-page="${p}">${p}</button>
-                                    `).join('')}
-                                    <button class="page-btn" data-page="${state.currentPage + 1}" ${state.currentPage === totalPages ? 'disabled' : ''}>»</button>
-                                </div>
-                            ` : ''}
-                        `}
-                    </div>
-                `;
-
-                document.getElementById('searchHistory')?.addEventListener('input', (e) => {
-                    state.searchHistory = e.target.value;
-                    state.currentPage = 1;
-                    renderHistorico();
-                });
-
-                document.getElementById('filterType')?.addEventListener('change', (e) => {
-                    state.filterType = e.target.value;
-                    state.currentPage = 1;
-                    renderHistorico();
-                });
-
-                document.getElementById('filterProduct')?.addEventListener('change', (e) => {
-                    state.filterProduct = e.target.value;
-                    state.currentPage = 1;
-                    renderHistorico();
-                });
-
-                document.getElementById('filterDate')?.addEventListener('change', (e) => {
-                    state.filterDate = e.target.value;
-                    state.currentPage = 1;
-                    renderHistorico();
-                });
-
-                document.getElementById('clearFilters')?.addEventListener('click', () => {
-                    state.searchHistory = '';
-                    state.filterType = '';
-                    state.filterProduct = '';
-                    state.filterDate = '';
-                    state.currentPage = 1;
-                    renderHistorico();
-                });
-
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.currentTarget.getAttribute('data-id');
-                        showConfirmModal('Excluir movimentação?', () => {
-                            state.movements = state.movements.filter(m => m.id !== id);
-                            recalcularEstoque();
-                            saveLocalData();
-                            renderHistorico();
-                            showToast('Movimentação excluída!');
-                        });
-                    });
-                });
-
-                document.querySelectorAll('.page-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const page = parseInt(e.currentTarget.getAttribute('data-page'));
-                        if (!isNaN(page)) {
-                            state.currentPage = page;
-                            renderHistorico();
-                        }
-                    });
-                });
-
-                document.getElementById('exportCsv')?.addEventListener('click', () => {
-                    const csv = state.movements.map(m => 
-                        `${m.data},${m.hora},${m.operador},${m.produto},${m.categoria},${m.quantidade},${m.tipo}`
-                    ).join('\n');
-                    
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `historico_${new Date().toISOString().split('T')[0]}.csv`;
-                    a.click();
-                });
-            }
-
-            // ==================== ESTOQUE ====================
-            function renderEstoque() {
-                const estoque = document.getElementById('estoque');
-                
-                let filtered = [...state.currentStock];
-                
-                if (state.searchStock) {
-                    filtered = filtered.filter(item => 
-                        item.produto.toLowerCase().includes(state.searchStock.toLowerCase())
-                    );
-                }
-                
-                if (state.filterCategory) {
-                    filtered = filtered.filter(item => item.categoria === state.filterCategory);
-                }
-
-                const totalItems = filtered.reduce((acc, item) => acc + item.estoque, 0);
-                const totalEntradas = filtered.reduce((acc, item) => acc + item.entradas, 0);
-                const lowItems = filtered.filter(item => item.estoque <= 15 && item.estoque > 0).length;
-
-                estoque.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Estoque Atual por Produto</h2>
-                        
-                        <div class="search-filter">
-                            <input type="text" id="searchStock" placeholder="Buscar produto..." value="${state.searchStock}">
-                            <select id="filterCategory">
-                                <option value="">Todas as categorias</option>
-                                <option value="Limpeza" ${state.filterCategory === 'Limpeza' ? 'selected' : ''}>Limpeza</option>
-                                <option value="Cozinha" ${state.filterCategory === 'Cozinha' ? 'selected' : ''}>Cozinha</option>
-                                <option value="Higiene" ${state.filterCategory === 'Higiene' ? 'selected' : ''}>Higiene</option>
-                            </select>
-                            <button id="refreshStock" class="btn btn-primary">
-                                <i class="fas fa-sync-alt"></i> Atualizar
-                            </button>
-                        </div>
-
-                        ${filtered.length === 0 ? `
-                            <div class="empty-state">
-                                <i class="fas fa-box-open"></i>
-                                <h3>Nenhum produto encontrado</h3>
-                            </div>
-                        ` : `
-                            <div class="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Produto</th>
-                                            <th>Categoria</th>
-                                            <th>Entradas</th>
-                                            <th>Saídas</th>
-                                            <th>Estoque</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${filtered.map(item => {
-                                            const status = getStockStatus(item.estoque);
-                                            return `
-                                                <tr>
-                                                    <td>${item.produto}</td>
-                                                    <td>
-                                                        <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
-                                                        ${item.categoria}
-                                                    </td>
-                                                    <td>${item.entradas}</td>
-                                                    <td>${item.saidas}</td>
-                                                    <td class="${status.class}">${item.estoque}</td>
-                                                    <td><span class="badge ${status.badge}">${status.text}</span></td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="stats-cards" style="margin-top: 20px;">
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: #3498db">
-                                        <i class="fas fa-boxes"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${totalItems}</h3>
-                                        <p>Itens em estoque</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: #27ae60">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${totalEntradas}</h3>
-                                        <p>Total entradas</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon" style="background: #e74c3c">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${lowItems}</h3>
-                                        <p>Itens baixo estoque</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `}
-                    </div>
-                `;
-
-                document.getElementById('searchStock')?.addEventListener('input', (e) => {
-                    state.searchStock = e.target.value;
-                    renderEstoque();
-                });
-
-                document.getElementById('filterCategory')?.addEventListener('change', (e) => {
-                    state.filterCategory = e.target.value;
-                    renderEstoque();
-                });
-
-                document.getElementById('refreshStock')?.addEventListener('click', () => {
-                    renderEstoque();
-                    showToast('Estoque atualizado!');
-                });
-            }
-
-            // ==================== FUNÇÕES DE RELATÓRIOS ====================
+        // ==================== HISTÓRICO ====================
+        function renderHistorico() {
+            const historico = document.getElementById('historico');
             
-            function generateStockReport() {
-                state.reportType = 'estoque';
-                state.reportData = [...state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
-                renderRelatorios();
+            let filtered = [...window.state.movements];
+            
+            if (window.state.searchHistory) {
+                filtered = filtered.filter(m => 
+                    m.produto.toLowerCase().includes(window.state.searchHistory.toLowerCase()) ||
+                    (m.operador && m.operador.toLowerCase().includes(window.state.searchHistory.toLowerCase()))
+                );
+            }
+            
+            if (window.state.filterType) {
+                filtered = filtered.filter(m => m.tipo === window.state.filterType);
+            }
+            
+            if (window.state.filterProduct) {
+                filtered = filtered.filter(m => m.produto === window.state.filterProduct);
+            }
+            
+            if (window.state.filterDate) {
+                filtered = filtered.filter(m => m.data === window.state.filterDate);
             }
 
-            function generateEntriesReport() {
-                const startDate = state.reportStartDate;
-                const endDate = state.reportEndDate;
-                
-                const filtered = state.movements.filter(m => 
-                    m.tipo === 'entrada' &&
-                    m.data >= startDate &&
-                    m.data <= endDate
-                ).sort((a, b) => new Date(a.data) - new Date(b.data));
-                
-                state.reportType = 'entradas';
-                state.reportData = filtered;
-                renderRelatorios();
-            }
+            const totalPages = Math.ceil(filtered.length / window.state.itemsPerPage);
+            const start = (window.state.currentPage - 1) * window.state.itemsPerPage;
+            const paginated = filtered.slice(start, start + window.state.itemsPerPage);
 
-            function generateExitsReport() {
-                const startDate = state.reportStartDate;
-                const endDate = state.reportEndDate;
-                
-                const filtered = state.movements.filter(m => 
-                    m.tipo === 'saida' &&
-                    m.data >= startDate &&
-                    m.data <= endDate
-                ).sort((a, b) => new Date(a.data) - new Date(b.data));
-                
-                state.reportType = 'saidas';
-                state.reportData = filtered;
-                renderRelatorios();
-            }
-
-            function generateReportPDF() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFont('helvetica');
-                
-                // Cabeçalho
-                doc.setFillColor(44, 62, 80);
-                doc.rect(0, 0, 210, 40, 'F');
-                
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(22);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Porter - Controle de Estoque', 105, 20, { align: 'center' });
-                
-                doc.setFontSize(14);
-                doc.setFont('helvetica', 'normal');
-                
-                let title = '';
-                let subtitle = '';
-                
-                switch(state.reportType) {
-                    case 'estoque':
-                        title = 'Relatório de Estoque Atual';
-                        subtitle = `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`;
-                        break;
-                    case 'entradas':
-                        title = 'Relatório de Entradas por Período';
-                        subtitle = `Período: ${formatDate(state.reportStartDate)} a ${formatDate(state.reportEndDate)}`;
-                        break;
-                    case 'saidas':
-                        title = 'Relatório de Saídas por Período';
-                        subtitle = `Período: ${formatDate(state.reportStartDate)} a ${formatDate(state.reportEndDate)}`;
-                        break;
-                }
-                
-                doc.setTextColor(44, 62, 80);
-                doc.setFontSize(18);
-                doc.setFont('helvetica', 'bold');
-                doc.text(title, 105, 55, { align: 'center' });
-                
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(127, 140, 141);
-                doc.text(subtitle, 105, 65, { align: 'center' });
-                
-                // Preparar dados da tabela
-                let tableData = [];
-                let headers = [];
-                
-                switch(state.reportType) {
-                    case 'estoque':
-                        headers = ['Produto', 'Categoria', 'Estoque Atual'];
-                        tableData = state.reportData.map(item => [
-                            item.produto,
-                            item.categoria,
-                            item.estoque.toString()
-                        ]);
-                        break;
-                        
-                    case 'entradas':
-                    case 'saidas':
-                        headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
-                        tableData = state.reportData.map(item => [
-                            formatDate(item.data),
-                            item.produto,
-                            item.quantidade.toString(),
-                            item.operador || '-'
-                        ]);
-                        break;
-                }
-                
-                // Gerar tabela
-                doc.autoTable({
-                    head: [headers],
-                    body: tableData,
-                    startY: 75,
-                    theme: 'grid',
-                    styles: {
-                        font: 'helvetica',
-                        fontSize: 10,
-                        cellPadding: 8,
-                        lineColor: [220, 220, 220],
-                        lineWidth: 0.1,
-                    },
-                    headStyles: {
-                        fillColor: [52, 152, 219],
-                        textColor: [255, 255, 255],
-                        fontStyle: 'bold',
-                        halign: 'center',
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 245, 245],
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 40 },
-                        1: { cellWidth: 60 },
-                        2: { cellWidth: 30, halign: 'center' },
-                        3: { cellWidth: 50 },
-                    },
-                    margin: { left: 15, right: 15 },
-                });
-                
-                // Rodapé
-                const pageCount = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= pageCount; i++) {
-                    doc.setPage(i);
+            historico.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">Histórico de Movimentações</h2>
                     
-                    doc.setDrawColor(220, 220, 220);
-                    doc.line(15, 285, 195, 285);
-                    
-                    doc.setFontSize(8);
-                    doc.setTextColor(127, 140, 141);
-                    doc.text('Sistema de Controle de Estoque Porter', 105, 295, { align: 'center' });
-                    doc.text(`Página ${i} de ${pageCount}`, 185, 295, { align: 'right' });
-                }
-                
-                const filename = `relatorio_${state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
-                doc.save(filename);
-                showToast('PDF gerado com sucesso!');
-            }
+                    <div class="search-filter">
+                        <input type="text" id="searchHistory" placeholder="Buscar..." value="${window.state.searchHistory}">
+                        <select id="filterType">
+                            <option value="">Todos os tipos</option>
+                            <option value="entrada" ${window.state.filterType === 'entrada' ? 'selected' : ''}>Entradas</option>
+                            <option value="saida" ${window.state.filterType === 'saida' ? 'selected' : ''}>Saídas</option>
+                        </select>
+                        <select id="filterProduct">
+                            <option value="">Todos os produtos</option>
+                            ${window.state.produtos.map(p => 
+                                `<option value="${p.nome}" ${window.state.filterProduct === p.nome ? 'selected' : ''}>${p.nome}</option>`
+                            ).join('')}
+                        </select>
+                        <input type="date" id="filterDate" value="${window.state.filterDate}">
+                        <button id="clearFilters" class="btn btn-warning">
+                            <i class="fas fa-times"></i> Limpar
+                        </button>
+                    </div>
 
-            // ==================== RELATÓRIOS ====================
-            function renderRelatorios() {
-                const relatorios = document.getElementById('relatorios');
-                
-                relatorios.innerHTML = `
-                    <div class="card">
-                        <h2 class="card-title">Relatórios do Sistema</h2>
-                        
-                        <div class="report-cards">
-                            <!-- Relatório de Estoque Atual -->
-                            <div class="report-card">
-                                <div class="report-icon" style="background: #3498db">
-                                    <i class="fas fa-boxes"></i>
-                                </div>
-                                <h3>Estoque Atual</h3>
-                                <p>Lista completa de todos os produtos com suas quantidades atuais e categorias.</p>
-                                <button id="stockReportBtn" class="btn btn-primary" style="width: 100%;">
-                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
-                                </button>
-                            </div>
-                            
-                            <!-- Relatório de Entradas por Período -->
-                            <div class="report-card">
-                                <div class="report-icon" style="background: #27ae60">
-                                    <i class="fas fa-arrow-down"></i>
-                                </div>
-                                <h3>Entradas por Período</h3>
-                                <p>Lista todas as entradas de produtos em um intervalo de datas.</p>
-                                
-                                <div class="date-range">
-                                    <div class="form-group" style="margin-bottom: 10px;">
-                                        <label>Data Inicial</label>
-                                        <input type="date" id="entriesStartDate" value="${state.reportStartDate}">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom: 10px;">
-                                        <label>Data Final</label>
-                                        <input type="date" id="entriesEndDate" value="${state.reportEndDate}">
-                                    </div>
-                                </div>
-                                
-                                <button id="entriesReportBtn" class="btn btn-success" style="width: 100%;">
-                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
-                                </button>
-                            </div>
-                            
-                            <!-- Relatório de Saídas por Período -->
-                            <div class="report-card">
-                                <div class="report-icon" style="background: #e74c3c">
-                                    <i class="fas fa-arrow-up"></i>
-                                </div>
-                                <h3>Saídas por Período</h3>
-                                <p>Lista todas as saídas de produtos em um intervalo de datas.</p>
-                                
-                                <div class="date-range">
-                                    <div class="form-group" style="margin-bottom: 10px;">
-                                        <label>Data Inicial</label>
-                                        <input type="date" id="exitsStartDate" value="${state.reportStartDate}">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom: 10px;">
-                                        <label>Data Final</label>
-                                        <input type="date" id="exitsEndDate" value="${state.reportEndDate}">
-                                    </div>
-                                </div>
-                                
-                                <button id="exitsReportBtn" class="btn btn-danger" style="width: 100%;">
-                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
-                                </button>
-                            </div>
+                    ${paginated.length === 0 ? `
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <h3>Nenhuma movimentação encontrada</h3>
+                        </div>
+                    ` : `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Hora</th>
+                                        <th>Operador</th>
+                                        <th>Produto</th>
+                                        <th>Categoria</th>
+                                        <th>Quantidade</th>
+                                        <th>Tipo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${paginated.map(m => `
+                                        <tr>
+                                            <td>${formatDate(m.data)}</td>
+                                            <td>${m.hora}</td>
+                                            <td>${m.operador || '-'}</td>
+                                            <td>${m.produto}</td>
+                                            <td>
+                                                <span class="category-indicator category-${m.categoria.toLowerCase()}"></span>
+                                                ${m.categoria}
+                                            </td>
+                                            <td>${m.quantidade}</td>
+                                            <td>
+                                                <span class="badge ${m.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">
+                                                    ${m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                         </div>
                         
-                        ${state.reportData && state.reportData.length > 0 ? `
-                            <div class="report-preview">
-                                <div class="report-header">
-                                    <h3>
-                                        ${state.reportType === 'estoque' ? '📊 Prévia - Estoque Atual' : 
-                                          state.reportType === 'entradas' ? '📥 Prévia - Entradas no Período' : 
-                                          '📤 Prévia - Saídas no Período'}
-                                    </h3>
-                                    <button id="downloadReportPDF" class="btn btn-primary">
-                                        <i class="fas fa-download"></i> Baixar PDF
-                                    </button>
-                                </div>
-                                
-                                ${state.reportType === 'estoque' ? `
-                                    <div class="table-container">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Produto</th>
-                                                    <th>Categoria</th>
-                                                    <th>Estoque Atual</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${state.reportData.map(item => {
-                                                    const status = getStockStatus(item.estoque);
-                                                    return `
-                                                        <tr>
-                                                            <td>${item.produto}</td>
-                                                            <td>
-                                                                <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
-                                                                ${item.categoria}
-                                                            </td>
-                                                            <td class="${status.class}">${item.estoque}</td>
-                                                            <td><span class="badge ${status.badge}">${status.text}</span></td>
-                                                        </tr>
-                                                    `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ` : `
-                                    <div class="table-container">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Data</th>
-                                                    <th>Produto</th>
-                                                    <th>Quantidade</th>
-                                                    <th>Responsável</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${state.reportData.map(item => `
-                                                    <tr>
-                                                        <td>${formatDate(item.data)}</td>
-                                                        <td>${item.produto}</td>
-                                                        <td>${item.quantidade}</td>
-                                                        <td>${item.operador || '-'}</td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                `}
-                                
-                                <div style="margin-top: 20px; text-align: right; color: var(--gray);">
-                                    <small>Total de registros: ${state.reportData.length}</small>
-                                </div>
-                            </div>
-                        ` : state.reportType ? `
-                            <div class="empty-state">
-                                <i class="fas fa-search"></i>
-                                <h3>Nenhum dado encontrado</h3>
-                                <p>Não há registros para o período selecionado.</p>
+                        ${totalPages > 1 ? `
+                            <div class="pagination">
+                                <button class="page-btn" data-page="${window.state.currentPage - 1}" ${window.state.currentPage === 1 ? 'disabled' : ''}>«</button>
+                                ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
+                                    <button class="page-btn ${p === window.state.currentPage ? 'active' : ''}" data-page="${p}">${p}</button>
+                                `).join('')}
+                                <button class="page-btn" data-page="${window.state.currentPage + 1}" ${window.state.currentPage === totalPages ? 'disabled' : ''}>»</button>
                             </div>
                         ` : ''}
+                    `}
+                </div>
+            `;
+
+            document.getElementById('searchHistory')?.addEventListener('input', (e) => {
+                window.state.searchHistory = e.target.value;
+                window.state.currentPage = 1;
+                renderHistorico();
+            });
+
+            document.getElementById('filterType')?.addEventListener('change', (e) => {
+                window.state.filterType = e.target.value;
+                window.state.currentPage = 1;
+                renderHistorico();
+            });
+
+            document.getElementById('filterProduct')?.addEventListener('change', (e) => {
+                window.state.filterProduct = e.target.value;
+                window.state.currentPage = 1;
+                renderHistorico();
+            });
+
+            document.getElementById('filterDate')?.addEventListener('change', (e) => {
+                window.state.filterDate = e.target.value;
+                window.state.currentPage = 1;
+                renderHistorico();
+            });
+
+            document.getElementById('clearFilters')?.addEventListener('click', () => {
+                window.state.searchHistory = '';
+                window.state.filterType = '';
+                window.state.filterProduct = '';
+                window.state.filterDate = '';
+                window.state.currentPage = 1;
+                renderHistorico();
+            });
+
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const page = parseInt(e.currentTarget.getAttribute('data-page'));
+                    if (!isNaN(page)) {
+                        window.state.currentPage = page;
+                        renderHistorico();
+                    }
+                });
+            });
+        }
+
+        // ==================== ESTOQUE ====================
+        function renderEstoque() {
+            const estoque = document.getElementById('estoque');
+            
+            let filtered = [...window.state.currentStock];
+            
+            if (window.state.searchStock) {
+                filtered = filtered.filter(item => 
+                    item.produto.toLowerCase().includes(window.state.searchStock.toLowerCase())
+                );
+            }
+            
+            if (window.state.filterCategory) {
+                filtered = filtered.filter(item => item.categoria === window.state.filterCategory);
+            }
+
+            const totalItems = filtered.reduce((acc, item) => acc + item.estoque, 0);
+            const totalEntradas = filtered.reduce((acc, item) => acc + item.entradas, 0);
+            const lowItems = filtered.filter(item => item.estoque <= 15 && item.estoque > 0).length;
+
+            estoque.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">Estoque Atual por Produto</h2>
+                    
+                    <div class="search-filter">
+                        <input type="text" id="searchStock" placeholder="Buscar produto..." value="${window.state.searchStock}">
+                        <select id="filterCategory">
+                            <option value="">Todas as categorias</option>
+                            <option value="Limpeza" ${window.state.filterCategory === 'Limpeza' ? 'selected' : ''}>Limpeza</option>
+                            <option value="Cozinha" ${window.state.filterCategory === 'Cozinha' ? 'selected' : ''}>Cozinha</option>
+                            <option value="Higiene" ${window.state.filterCategory === 'Higiene' ? 'selected' : ''}>Higiene</option>
+                        </select>
                     </div>
-                `;
 
-                document.getElementById('stockReportBtn')?.addEventListener('click', generateStockReport);
-                
-                document.getElementById('entriesReportBtn')?.addEventListener('click', () => {
-                    const startDate = document.getElementById('entriesStartDate').value;
-                    const endDate = document.getElementById('entriesEndDate').value;
-                    
-                    if (startDate && endDate) {
-                        if (new Date(startDate) > new Date(endDate)) {
-                            showToast('Data inicial não pode ser maior que data final', 'error');
-                            return;
-                        }
+                    ${filtered.length === 0 ? `
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <h3>Nenhum produto encontrado</h3>
+                        </div>
+                    ` : `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Categoria</th>
+                                        <th>Entradas</th>
+                                        <th>Saídas</th>
+                                        <th>Estoque</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filtered.map(item => {
+                                        const status = getStockStatus(item.estoque);
+                                        return `
+                                            <tr>
+                                                <td>${item.produto}</td>
+                                                <td>
+                                                    <span class="category-indicator category-${item.categoria.toLowerCase()}"></span>
+                                                    ${item.categoria}
+                                                </td>
+                                                <td>${item.entradas}</td>
+                                                <td>${item.saidas}</td>
+                                                <td class="${status.class}">${item.estoque}</td>
+                                                <td><span class="badge ${status.badge}">${status.text}</span></td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                         
-                        state.reportStartDate = startDate;
-                        state.reportEndDate = endDate;
-                        generateEntriesReport();
-                    } else {
-                        showToast('Selecione as datas inicial e final', 'warning');
-                    }
-                });
-                
-                document.getElementById('exitsReportBtn')?.addEventListener('click', () => {
-                    const startDate = document.getElementById('exitsStartDate').value;
-                    const endDate = document.getElementById('exitsEndDate').value;
-                    
-                    if (startDate && endDate) {
-                        if (new Date(startDate) > new Date(endDate)) {
-                            showToast('Data inicial não pode ser maior que data final', 'error');
-                            return;
-                        }
-                        
-                        state.reportStartDate = startDate;
-                        state.reportEndDate = endDate;
-                        generateExitsReport();
-                    } else {
-                        showToast('Selecione as datas inicial e final', 'warning');
-                    }
-                });
-                
-                document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
-            }
+                        <div class="stats-cards" style="margin-top: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #3498db">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>${totalItems}</h3>
+                                    <p>Itens em estoque</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #27ae60">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>${totalEntradas}</h3>
+                                    <p>Total entradas</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e74c3c">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>${lowItems}</h3>
+                                    <p>Itens baixo estoque</p>
+                                </div>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `;
 
-            // ==================== MODAL ====================
-            function showConfirmModal(message, onConfirm) {
-                confirmMessage.textContent = message;
-                confirmModal.style.display = 'flex';
-                
-                confirmYes.onclick = () => {
-                    onConfirm();
-                    confirmModal.style.display = 'none';
-                };
-                
-                confirmNo.onclick = () => {
-                    confirmModal.style.display = 'none';
-                };
-            }
-
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    confirmModal.style.display = 'none';
-                });
+            document.getElementById('searchStock')?.addEventListener('input', (e) => {
+                window.state.searchStock = e.target.value;
+                renderEstoque();
             });
 
-            // ==================== TABS ====================
-            function switchTab(tabId) {
-                state.activeTab = tabId;
-                state.currentPage = 1;
-                
-                tabs.forEach(tab => {
-                    if (tab.getAttribute('data-tab') === tabId) {
-                        tab.classList.add('active');
-                    } else {
-                        tab.classList.remove('active');
-                    }
-                });
-                
-                tabContents.forEach(content => {
-                    if (content.id === tabId) {
-                        content.classList.add('active');
-                    } else {
-                        content.classList.remove('active');
-                    }
-                });
-                
-                renderCurrentTab();
-            }
+            document.getElementById('filterCategory')?.addEventListener('change', (e) => {
+                window.state.filterCategory = e.target.value;
+                renderEstoque();
+            });
+        }
 
+        // ==================== RELATÓRIOS ====================
+        function generateStockReport() {
+            window.state.reportType = 'estoque';
+            window.state.reportData = [...window.state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
+            renderRelatorios();
+        }
+
+        function generateEntriesReport() {
+            const startDate = window.state.reportStartDate;
+            const endDate = window.state.reportEndDate;
+            
+            const filtered = window.state.movements.filter(m => 
+                m.tipo === 'entrada' &&
+                m.data >= startDate &&
+                m.data <= endDate
+            ).sort((a, b) => new Date(a.data) - new Date(b.data));
+            
+            window.state.reportType = 'entradas';
+            window.state.reportData = filtered;
+            renderRelatorios();
+        }
+
+        function generateExitsReport() {
+            const startDate = window.state.reportStartDate;
+            const endDate = window.state.reportEndDate;
+            
+            const filtered = window.state.movements.filter(m => 
+                m.tipo === 'saida' &&
+                m.data >= startDate &&
+                m.data <= endDate
+            ).sort((a, b) => new Date(a.data) - new Date(b.data));
+            
+            window.state.reportType = 'saidas';
+            window.state.reportData = filtered;
+            renderRelatorios();
+        }
+
+        function generateReportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont('helvetica');
+            
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Porter - Controle de Estoque', 105, 20, { align: 'center' });
+            
+            let title = '';
+            let subtitle = '';
+            
+            switch(window.state.reportType) {
+                case 'estoque':
+                    title = 'Relatório de Estoque Atual';
+                    subtitle = `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`;
+                    break;
+                case 'entradas':
+                    title = 'Relatório de Entradas por Período';
+                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
+                    break;
+                case 'saidas':
+                    title = 'Relatório de Saídas por Período';
+                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
+                    break;
+            }
+            
+            doc.setTextColor(44, 62, 80);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, 105, 55, { align: 'center' });
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(127, 140, 141);
+            doc.text(subtitle, 105, 65, { align: 'center' });
+            
+            let tableData = [];
+            let headers = [];
+            
+            switch(window.state.reportType) {
+                case 'estoque':
+                    headers = ['Produto', 'Categoria', 'Estoque Atual'];
+                    tableData = window.state.reportData.map(item => [
+                        item.produto,
+                        item.categoria,
+                        item.estoque.toString()
+                    ]);
+                    break;
+                    
+                case 'entradas':
+                case 'saidas':
+                    headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
+                    tableData = window.state.reportData.map(item => [
+                        formatDate(item.data),
+                        item.produto,
+                        item.quantidade.toString(),
+                        item.operador || '-'
+                    ]);
+                    break;
+            }
+            
+            doc.autoTable({
+                head: [headers],
+                body: tableData,
+                startY: 75,
+                theme: 'grid',
+                styles: { font: 'helvetica', fontSize: 10, cellPadding: 8 },
+                headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                margin: { left: 15, right: 15 },
+            });
+            
+            const filename = `relatorio_${window.state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+            showToast('PDF gerado com sucesso!');
+        }
+
+        function renderRelatorios() {
+            const relatorios = document.getElementById('relatorios');
+            
+            relatorios.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">Relatórios do Sistema</h2>
+                    
+                    <div class="report-cards">
+                        <div class="report-card">
+                            <div class="report-icon" style="background: #3498db">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h3>Estoque Atual</h3>
+                            <p>Lista completa de todos os produtos com suas quantidades atuais e categorias.</p>
+                            <button id="stockReportBtn" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-file-pdf"></i> Gerar Relatório
+                            </button>
+                        </div>
+                        
+                        <div class="report-card">
+                            <div class="report-icon" style="background: #27ae60">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <h3>Entradas por Período</h3>
+                            <p>Lista todas as entradas de produtos em um intervalo de datas.</p>
+                            
+                            <div class="date-range">
+                                <div class="form-group">
+                                    <label>Data Inicial</label>
+                                    <input type="date" id="entriesStartDate" value="${window.state.reportStartDate}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data Final</label>
+                                    <input type="date" id="entriesEndDate" value="${window.state.reportEndDate}">
+                                </div>
+                            </div>
+                            
+                            <button id="entriesReportBtn" class="btn btn-success" style="width: 100%;">
+                                <i class="fas fa-file-pdf"></i> Gerar Relatório
+                            </button>
+                        </div>
+                        
+                        <div class="report-card">
+                            <div class="report-icon" style="background: #e74c3c">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <h3>Saídas por Período</h3>
+                            <p>Lista todas as saídas de produtos em um intervalo de datas.</p>
+                            
+                            <div class="date-range">
+                                <div class="form-group">
+                                    <label>Data Inicial</label>
+                                    <input type="date" id="exitsStartDate" value="${window.state.reportStartDate}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data Final</label>
+                                    <input type="date" id="exitsEndDate" value="${window.state.reportEndDate}">
+                                </div>
+                            </div>
+                            
+                            <button id="exitsReportBtn" class="btn btn-danger" style="width: 100%;">
+                                <i class="fas fa-file-pdf"></i> Gerar Relatório
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${window.state.reportData && window.state.reportData.length > 0 ? `
+                        <div class="report-preview">
+                            <div class="report-header">
+                                <h3>
+                                    ${window.state.reportType === 'estoque' ? '📊 Prévia - Estoque Atual' : 
+                                      window.state.reportType === 'entradas' ? '📥 Prévia - Entradas no Período' : 
+                                      '📤 Prévia - Saídas no Período'}
+                                </h3>
+                                <button id="downloadReportPDF" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Baixar PDF
+                                </button>
+                            </div>
+                            
+                            ${window.state.reportType === 'estoque' ? `
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Status</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            ${window.state.reportData.map(item => {
+                                                const status = getStockStatus(item.estoque);
+                                                return `
+                                                    <tr>
+                                                        <td>${item.produto}</td>
+                                                        <td>${item.categoria}</td>
+                                                        <td class="${status.class}">${item.estoque}</td>
+                                                        <td><span class="badge ${status.badge}">${status.text}</span></td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Data</th><th>Produto</th><th>Quantidade</th><th>Responsável</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            ${window.state.reportData.map(item => `
+                                                <tr>
+                                                    <td>${formatDate(item.data)}</td>
+                                                    <td>${item.produto}</td>
+                                                    <td>${item.quantidade}</td>
+                                                    <td>${item.operador || '-'}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `}
+                            
+                            <div style="margin-top: 20px; text-align: right;">
+                                <small>Total de registros: ${window.state.reportData.length}</small>
+                            </div>
+                        </div>
+                    ` : window.state.reportType ? `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>Nenhum dado encontrado</h3>
+                            <p>Não há registros para o período selecionado.</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('stockReportBtn')?.addEventListener('click', generateStockReport);
+            
+            document.getElementById('entriesReportBtn')?.addEventListener('click', () => {
+                const startDate = document.getElementById('entriesStartDate').value;
+                const endDate = document.getElementById('entriesEndDate').value;
+                
+                if (startDate && endDate) {
+                    if (new Date(startDate) > new Date(endDate)) {
+                        showToast('Data inicial não pode ser maior que data final', 'error');
+                        return;
+                    }
+                    
+                    window.state.reportStartDate = startDate;
+                    window.state.reportEndDate = endDate;
+                    generateEntriesReport();
+                } else {
+                    showToast('Selecione as datas inicial e final', 'warning');
+                }
+            });
+            
+            document.getElementById('exitsReportBtn')?.addEventListener('click', () => {
+                const startDate = document.getElementById('exitsStartDate').value;
+                const endDate = document.getElementById('exitsEndDate').value;
+                
+                if (startDate && endDate) {
+                    if (new Date(startDate) > new Date(endDate)) {
+                        showToast('Data inicial não pode ser maior que data final', 'error');
+                        return;
+                    }
+                    
+                    window.state.reportStartDate = startDate;
+                    window.state.reportEndDate = endDate;
+                    generateExitsReport();
+                } else {
+                    showToast('Selecione as datas inicial e final', 'warning');
+                }
+            });
+            
+            document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
+        }
+
+        // ==================== MODAL ====================
+        function showConfirmModal(message, onConfirm) {
+            confirmMessage.textContent = message;
+            confirmModal.style.display = 'flex';
+            
+            confirmYes.onclick = () => {
+                onConfirm();
+                confirmModal.style.display = 'none';
+            };
+            
+            confirmNo.onclick = () => {
+                confirmModal.style.display = 'none';
+            };
+        }
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                confirmModal.style.display = 'none';
+            });
+        });
+
+        // ==================== TABS ====================
+        function switchTab(tabId) {
+            window.state.activeTab = tabId;
+            window.state.currentPage = 1;
+            
             tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    switchTab(tabId);
-                });
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
             });
+            
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            renderCurrentTab();
+        }
 
-            // ==================== INICIAR APLICAÇÃO ====================
-            initializeApp();
-        })();
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+
+        // ==================== INICIALIZAÇÃO ====================
+        async function initializeApp() {
+            loadingMessage.textContent = 'Inicializando Firebase...';
+            
+            try {
+                // Inicializar Firebase
+                firebase.initializeApp(firebaseConfig);
+                
+                // Configurar persistência
+                const db = firebase.firestore();
+                await db.enablePersistence({ experimentalForceOwningTab: true })
+                    .catch(err => {
+                        console.log('Persistência:', err.message);
+                    });
+                
+                if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase pronto';
+                
+                // Verificar se usuário já está logado
+                firebase.auth().onAuthStateChanged(async (user) => {
+                    if (user) {
+                        console.log('Usuário já logado:', user.email);
+                        // Login automático
+                        window.state.user = user;
+                        userEmail.textContent = user.email;
+                        
+                        // Verificar perfil
+                        const perfilDoc = await db.collection('usuarios').doc(user.uid).get();
+                        window.state.isAdmin = perfilDoc.exists ? perfilDoc.data().perfil === 'admin' : false;
+                        userProfile.textContent = window.state.isAdmin ? 'admin' : 'usuario';
+                        
+                        if (window.state.isAdmin) {
+                            document.querySelectorAll('.admin-only').forEach(el => {
+                                el.style.display = 'block';
+                            });
+                        }
+                        
+                        // Carregar dados
+                        await carregarDadosIniciaisFirebase();
+                        iniciarListenerTempoReal();
+                        
+                        loadingScreen.style.display = 'none';
+                        mainApp.style.display = 'block';
+                        renderCurrentTab();
+                        showToast('✅ Login automático realizado!');
+                    } else {
+                        // Mostrar tela de login
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                            loginScreen.style.display = 'flex';
+                        }, 1500);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Erro na inicialização:', error);
+                if (firebaseStatus) firebaseStatus.innerHTML = '❌ Erro no Firebase';
+                
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                }, 1500);
+            }
+        }
+
+        // Iniciar
+        initializeApp();
     </script>
 </body>
 </html>
