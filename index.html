@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porter - Controle de Estoque Online</title>
+    <title>Porter - Controle de Estoque</title>
     
-    <!-- Firebase SDK (versão compatível) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -869,7 +869,17 @@
 
             function formatDate(dateStr) {
                 try {
-                    return new Date(dateStr).toLocaleDateString('pt-BR');
+                    const [year, month, day] = dateStr.split('-');
+                    return `${day}/${month}/${year}`;
+                } catch {
+                    return dateStr;
+                }
+            }
+
+            function parseDateBR(dateStr) {
+                try {
+                    const [day, month, year] = dateStr.split('/');
+                    return `${year}-${month}-${day}`;
                 } catch {
                     return dateStr;
                 }
@@ -895,6 +905,7 @@
                         const data = JSON.parse(saved);
                         state.movements = data.movements || [];
                         state.produtos = data.produtos || produtosIniciais;
+                        console.log('Dados carregados do localStorage:', state.movements.length, 'movimentos');
                     } catch (e) {
                         console.error('Erro ao carregar dados locais:', e);
                         useInitialData();
@@ -907,23 +918,66 @@
             }
 
             function useInitialData() {
+                // TODAS AS SUAS MOVIMENTAÇÕES PRESERVADAS
                 state.movements = [
-                    { id: '1', data: '2026-03-01', hora: '08:00', operador: operadores[0], produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
-                    { id: '2', data: '2026-03-02', hora: '09:00', operador: operadores[1], produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { id: '3', data: '2026-03-01', hora: '10:00', operador: operadores[2], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
-                    { id: '4', data: '2026-03-02', hora: '11:00', operador: operadores[3], produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
-                    { id: '5', data: '2026-03-01', hora: '08:30', operador: operadores[4], produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
-                    { id: '6', data: '2026-03-01', hora: '09:15', operador: operadores[5], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
-                    { id: '7', data: '2026-03-02', hora: '10:45', operador: operadores[6], produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
-                    { id: '8', data: '2026-03-01', hora: '11:30', operador: operadores[7], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
-                    { id: '9', data: '2026-03-02', hora: '13:00', operador: operadores[8], produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' },
-                    { id: '10', data: '2026-03-01', hora: '14:00', operador: operadores[9], produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
-                    { id: '11', data: '2026-03-01', hora: '15:00', operador: operadores[10], produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
-                    { id: '12', data: '2026-03-01', hora: '16:00', operador: operadores[11], produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
-                    { id: '13', data: '2026-03-01', hora: '08:45', operador: operadores[12], produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' }
+                    // Entradas de 08/03
+                    { id: '101', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Desinfetante', categoria: 'Limpeza', quantidade: 1, tipo: 'entrada' },
+                    { id: '102', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                    { id: '103', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 8, tipo: 'entrada' },
+                    { id: '104', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                    { id: '105', data: '2026-03-08', hora: '20:42', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'entrada' },
+                    
+                    // Saídas de 07/03
+                    { id: '106', data: '2026-03-07', hora: '21:00', operador: 'LUCAS VINICIUS DA SILVA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '107', data: '2026-03-07', hora: '14:55', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 4, tipo: 'saida' },
+                    { id: '108', data: '2026-03-07', hora: '10:30', operador: 'MARIA GABRIELA ANTONIO', produto: 'Detergente', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '109', data: '2026-03-07', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
+                    { id: '110', data: '2026-03-07', hora: '05:10', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
+                    
+                    // Saídas de 06/03
+                    { id: '111', data: '2026-03-06', hora: '16:27', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '112', data: '2026-03-06', hora: '14:40', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '113', data: '2026-03-06', hora: '13:12', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 2, tipo: 'saida' },
+                    { id: '114', data: '2026-03-06', hora: '07:00', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '115', data: '2026-03-06', hora: '05:22', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    
+                    // Saídas de 05/03
+                    { id: '116', data: '2026-03-05', hora: '18:59', operador: 'ANA BEATRIZ PEREIRA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '117', data: '2026-03-05', hora: '18:15', operador: 'ANA BEATRIZ PEREIRA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '118', data: '2026-03-05', hora: '10:51', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
+                    
+                    // Saídas de 04/03
+                    { id: '119', data: '2026-03-04', hora: '14:30', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 3, tipo: 'saida' },
+                    { id: '120', data: '2026-03-04', hora: '13:20', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
+                    { id: '121', data: '2026-03-04', hora: '13:17', operador: 'JOSÉ CARLOS – SUPERVISOR', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '122', data: '2026-03-04', hora: '06:03', operador: 'MIKAEL – INSTRUTOR', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    
+                    // Saídas de 03/03
+                    { id: '123', data: '2026-03-03', hora: '21:35', operador: 'DENISE CRISTINA DE SOUSA', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 2, tipo: 'saida' },
+                    { id: '124', data: '2026-03-03', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 1, tipo: 'saida' },
+                    { id: '125', data: '2026-03-03', hora: '16:30', operador: 'MARISA MENEGHETTI', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 1, tipo: 'saida' },
+                    { id: '126', data: '2026-03-03', hora: '15:00', operador: 'MARISA MENEGHETTI', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                    
+                    // Entradas de 28/02
+                    { id: '127', data: '2026-02-28', hora: '08:00', operador: 'MARIO ALEXANDRE CLEMENTIN', produto: 'Café', categoria: 'Cozinha', quantidade: 4, tipo: 'entrada' },
+                    { id: '128', data: '2026-02-28', hora: '10:00', operador: 'JACKELINE ARAUJO SAMPAIO DIAS', produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'entrada' },
+                    { id: '129', data: '2026-02-28', hora: '08:30', operador: 'CARLOS HENRIQUE FERREIRA LEITE', produto: 'Filtro de café', categoria: 'Cozinha', quantidade: 6, tipo: 'entrada' },
+                    { id: '130', data: '2026-02-28', hora: '09:15', operador: 'LUIZ FERNANDO S MORYAMA DOS SANTOS', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 21, tipo: 'entrada' },
+                    { id: '131', data: '2026-02-28', hora: '11:30', operador: 'MATHEUS ROBERTO BRASIL SILVA', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 17, tipo: 'entrada' },
+                    { id: '132', data: '2026-02-28', hora: '14:00', operador: 'KAIC VITOR MARTINS DE BRITO', produto: 'Pano', categoria: 'Higiene', quantidade: 6, tipo: 'entrada' },
+                    { id: '133', data: '2026-02-28', hora: '15:00', operador: 'DEISY SANTOS CRUZ', produto: 'Sabonete líquido', categoria: 'Higiene', quantidade: 1, tipo: 'entrada' },
+                    { id: '134', data: '2026-02-28', hora: '16:00', operador: 'DANIELE DA SILVA ROCHA', produto: 'Saco de lixo', categoria: 'Limpeza', quantidade: 170, tipo: 'entrada' },
+                    { id: '135', data: '2026-02-28', hora: '08:45', operador: 'ANA BEATRIZ PEREIRA', produto: 'Detergente', categoria: 'Limpeza', quantidade: 2, tipo: 'entrada' },
+                    
+                    // Saídas de 01/03
+                    { id: '136', data: '2026-03-01', hora: '09:00', operador: 'VANIA DO SOCORRO LEOCADIO', produto: 'Café', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                    { id: '137', data: '2026-03-01', hora: '11:00', operador: 'LUCAS VINICIUS DA SILVA', produto: 'Açúcar', categoria: 'Cozinha', quantidade: 1, tipo: 'saida' },
+                    { id: '138', data: '2026-03-01', hora: '10:45', operador: 'ERICK DE SOUZA RODRIGUES', produto: 'Papel toalha', categoria: 'Limpeza', quantidade: 6, tipo: 'saida' },
+                    { id: '139', data: '2026-03-01', hora: '13:00', operador: 'WELINGTON FELIPE ALVES BARBOSA', produto: 'Papel higiênico', categoria: 'Higiene', quantidade: 4, tipo: 'saida' }
                 ];
                 
                 state.produtos = produtosIniciais;
+                console.log('Dados iniciais carregados:', state.movements.length, 'movimentos');
             }
 
             function saveLocalData() {
@@ -970,50 +1024,56 @@
                 });
 
                 state.currentStock = Object.values(stockMap);
+                console.log('Estoque recalculado:', state.currentStock);
             }
 
-            // ==================== INICIALIZAÇÃO ====================
+            // ==================== INICIALIZAÇÃO CORRIGIDA ====================
             function initializeApp() {
                 loadingMessage.textContent = 'Carregando dados...';
                 
                 // Primeiro, carregar dados locais para garantir que algo apareça
                 loadLocalData();
                 
-                // Tentar conectar ao Firebase
+                // Tentar conectar ao Firebase (opcional, não crítico)
                 try {
                     loadingMessage.textContent = 'Conectando ao Firebase...';
                     firebase.initializeApp(firebaseConfig);
                     const db = firebase.firestore();
                     
-                    // Configurar persistência offline
-                    db.enablePersistence()
+                    // CORREÇÃO 1: Configurar persistência offline com multi-tab
+                    db.enablePersistence({ experimentalForceOwningTab: true })
                         .then(() => {
                             console.log('Persistência offline habilitada');
                         })
                         .catch((err) => {
-                            console.log('Persistência offline não disponível:', err);
+                            console.log('Persistência offline não disponível (não crítico):', err.message);
                         });
                     
-                    state.firebaseAvailable = true;
-                    if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase conectado';
-                    if (modeStatus) modeStatus.innerHTML = 'Online (Firebase)';
-                    if (connectionStatus) {
-                        connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
-                        connectionStatus.className = 'connection-status online';
-                    }
-                    
-                    // Verificar se precisa inicializar dados no Firebase
-                    checkAndInitializeFirebase(db);
+                    // Tentar login automático (opcional)
+                    firebase.auth().signInWithEmailAndPassword('admin@porter.com.br', 'admin123')
+                        .then((userCredential) => {
+                            console.log('Login Firebase:', userCredential.user.email);
+                            state.firebaseAvailable = true;
+                            
+                            if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase conectado';
+                            if (modeStatus) modeStatus.innerHTML = 'Online (Firebase)';
+                            if (connectionStatus) {
+                                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Firebase OK';
+                                connectionStatus.className = 'connection-status online';
+                            }
+                        })
+                        .catch((error) => {
+                            console.log('Login Firebase não disponível (modo offline):', error.message);
+                            state.firebaseAvailable = false;
+                            if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline';
+                            if (modeStatus) modeStatus.innerHTML = 'Offline (dados locais)';
+                        });
                     
                 } catch (e) {
-                    console.error('Erro ao conectar Firebase:', e);
+                    console.log('Firebase não disponível, modo offline:', e.message);
                     state.firebaseAvailable = false;
-                    if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline (Firebase indisponível)';
+                    if (firebaseStatus) firebaseStatus.innerHTML = '⚠️ Modo offline';
                     if (modeStatus) modeStatus.innerHTML = 'Offline (dados locais)';
-                    if (connectionStatus) {
-                        connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Modo offline';
-                        connectionStatus.className = 'connection-status offline';
-                    }
                 }
                 
                 // Sempre mostrar a tela de login após carregar
@@ -1023,51 +1083,13 @@
                 }, 1500);
             }
 
-            async function checkAndInitializeFirebase(db) {
-                try {
-                    // Verificar se existem produtos
-                    const produtosSnapshot = await db.collection('produtos').get();
-                    
-                    if (produtosSnapshot.empty) {
-                        console.log('Inicializando produtos no Firebase...');
-                        
-                        // Criar produtos iniciais
-                        const batch = db.batch();
-                        produtosIniciais.forEach(produto => {
-                            const docRef = db.collection('produtos').doc();
-                            batch.set(docRef, {
-                                ...produto,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                        
-                        await batch.commit();
-                        
-                        // Criar movimentações iniciais
-                        const movimentacoesBatch = db.batch();
-                        state.movements.forEach(mov => {
-                            const docRef = db.collection('movimentacoes').doc();
-                            movimentacoesBatch.set(docRef, {
-                                ...mov,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                        
-                        await movimentacoesBatch.commit();
-                        console.log('Dados iniciais criados no Firebase!');
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar Firebase:', error);
-                }
-            }
-
             // ==================== LOGIN ====================
             document.getElementById('loginForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
                 
-                // Autenticação simples
+                // Autenticação simples (mantida igual)
                 if (email === 'admin@porter.com.br' && password === 'admin123') {
                     state.user = { email: 'admin@porter.com.br' };
                     state.isAdmin = true;
@@ -1328,12 +1350,27 @@
                     }
                 }
 
-                // Adicionar localmente
+                // 1. PRIMEIRO: Salvar LOCALMENTE (seus dados nunca são perdidos)
                 state.movements.unshift(movimento);
                 recalcularEstoque();
                 saveLocalData();
                 
-                showToast('Movimentação registrada! (Modo offline)');
+                showToast('Movimentação registrada!');
+                
+                // 2. DEPOIS: Tentar sincronizar com Firebase (se disponível) - OPCIONAL
+                if (state.firebaseAvailable) {
+                    try {
+                        const db = firebase.firestore();
+                        db.collection('movimentacoes').add({
+                            ...movimento,
+                            sincronizado: new Date().toISOString()
+                        }).catch(err => {
+                            console.log('Erro ao sincronizar com Firebase (não crítico):', err.message);
+                        });
+                    } catch (e) {
+                        console.log('Firebase indisponível para sincronia');
+                    }
+                }
                 
                 // Limpar formulário
                 document.getElementById('movData').value = new Date().toISOString().split('T')[0];
@@ -1370,6 +1407,9 @@
                     filtered = filtered.filter(m => m.data === state.filterDate);
                 }
 
+                // Ordenar por data (mais recente primeiro)
+                filtered.sort((a, b) => new Date(b.data) - new Date(a.data));
+
                 const totalPages = Math.ceil(filtered.length / state.itemsPerPage);
                 const start = (state.currentPage - 1) * state.itemsPerPage;
                 const paginated = filtered.slice(start, start + state.itemsPerPage);
@@ -1395,6 +1435,11 @@
                             <button id="clearFilters" class="btn btn-warning">
                                 <i class="fas fa-times"></i> Limpar
                             </button>
+                            ${state.isAdmin ? `
+                                <button id="exportCsv" class="btn btn-success">
+                                    <i class="fas fa-download"></i> Exportar
+                                </button>
+                            ` : ''}
                         </div>
 
                         ${paginated.length === 0 ? `
@@ -1514,6 +1559,19 @@
                             renderHistorico();
                         }
                     });
+                });
+
+                document.getElementById('exportCsv')?.addEventListener('click', () => {
+                    const csv = state.movements.map(m => 
+                        `${m.data},${m.hora},${m.operador},${m.produto},${m.categoria},${m.quantidade},${m.tipo}`
+                    ).join('\n');
+                    
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `historico_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
                 });
             }
 
