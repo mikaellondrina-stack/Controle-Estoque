@@ -866,9 +866,15 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        // ==================== FUNÇÃO CORRIGIDA ====================
+        // CORREÇÃO: Tratar a data como data local, sem conversão UTC
         function formatDate(dateStr) {
             try {
-                return new Date(dateStr).toLocaleDateString('pt-BR');
+                // Divide a string YYYY-MM-DD e cria a data considerando o fuso horário local
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const date = new Date(year, month - 1, day); // month é 0-indexed no JavaScript
+                
+                return date.toLocaleDateString('pt-BR');
             } catch {
                 return dateStr;
             }
@@ -1122,15 +1128,29 @@
             const totalProdutos = window.state.currentStock.filter(p => p.estoque > 0).length;
             const totalEntradas = window.state.movements.filter(m => {
                 try {
-                    const date = new Date(m.data);
-                    return date.getMonth() === new Date().getMonth() && m.tipo === 'entrada';
+                    // Usando a função formatDate corrigida apenas para exibição
+                    // Para cálculos, precisamos comparar as strings diretamente
+                    const dataMov = m.data;
+                    const hoje = new Date();
+                    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+                    const anoAtual = hoje.getFullYear();
+                    
+                    return dataMov && 
+                           dataMov.startsWith(`${anoAtual}-${mesAtual}`) && 
+                           m.tipo === 'entrada';
                 } catch { return false; }
             }).reduce((acc, m) => acc + m.quantidade, 0);
             
             const totalSaidas = window.state.movements.filter(m => {
                 try {
-                    const date = new Date(m.data);
-                    return date.getMonth() === new Date().getMonth() && m.tipo === 'saida';
+                    const dataMov = m.data;
+                    const hoje = new Date();
+                    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+                    const anoAtual = hoje.getFullYear();
+                    
+                    return dataMov && 
+                           dataMov.startsWith(`${anoAtual}-${mesAtual}`) && 
+                           m.tipo === 'saida';
                 } catch { return false; }
             }).reduce((acc, m) => acc + m.quantidade, 0);
             
@@ -1629,7 +1649,7 @@
                 m.tipo === 'entrada' &&
                 m.data >= startDate &&
                 m.data <= endDate
-            ).sort((a, b) => new Date(a.data) - new Date(b.data));
+            ).sort((a, b) => a.data.localeCompare(b.data));
             
             window.state.reportType = 'entradas';
             window.state.reportData = filtered;
@@ -1644,7 +1664,7 @@
                 m.tipo === 'saida' &&
                 m.data >= startDate &&
                 m.data <= endDate
-            ).sort((a, b) => new Date(a.data) - new Date(b.data));
+            ).sort((a, b) => a.data.localeCompare(b.data));
             
             window.state.reportType = 'saidas';
             window.state.reportData = filtered;
@@ -1874,7 +1894,7 @@
                 const endDate = document.getElementById('entriesEndDate').value;
                 
                 if (startDate && endDate) {
-                    if (new Date(startDate) > new Date(endDate)) {
+                    if (startDate > endDate) {
                         showToast('Data inicial não pode ser maior que data final', 'error');
                         return;
                     }
@@ -1892,7 +1912,7 @@
                 const endDate = document.getElementById('exitsEndDate').value;
                 
                 if (startDate && endDate) {
-                    if (new Date(startDate) > new Date(endDate)) {
+                    if (startDate > endDate) {
                         showToast('Data inicial não pode ser maior que data final', 'error');
                         return;
                     }
