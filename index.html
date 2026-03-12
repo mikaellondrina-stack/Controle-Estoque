@@ -243,7 +243,12 @@
             transition: all 0.3s;
         }
 
-        input:focus, select:focus {
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--secondary);
             box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
@@ -270,6 +275,8 @@
         .btn-danger:hover { background: #c0392b; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-warning:hover { background: #d68910; }
+        .btn-whatsapp { background: #25D366; color: white; }
+        .btn-whatsapp:hover { background: #128C7E; }
         .btn-sm { padding: 8px 15px; font-size: 0.9rem; }
 
         .table-container {
@@ -310,6 +317,7 @@
         .badge-success { background: #d5f4e6; color: var(--success); }
         .badge-danger { background: #fadbd8; color: var(--danger); }
         .badge-warning { background: #fef5e7; color: var(--warning); }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
 
         .stats-cards {
             display: grid;
@@ -558,10 +566,6 @@
             border-top: 2px solid var(--primary);
         }
 
-        .admin-only {
-            display: none;
-        }
-
         .category-indicator {
             display: inline-block;
             width: 12px;
@@ -585,6 +589,18 @@
 
         .connection-status.online { color: var(--success); }
         .connection-status.offline { color: var(--danger); }
+
+        .pedido-form {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .status-pendente { color: #f39c12; font-weight: 600; }
+        .status-aprovado { color: #27ae60; font-weight: 600; }
+        .status-recusado { color: #e74c3c; font-weight: 600; }
 
         footer {
             text-align: center;
@@ -706,8 +722,9 @@
                     <div class="tab" data-tab="relatorios">
                         <i class="fas fa-file-pdf"></i> Relatórios
                     </div>
-                    <div class="tab admin-only" data-tab="admin">
-                        <i class="fas fa-cog"></i> Admin
+                    <!-- ABA ADMIN SUBSTITUÍDA POR PEDIDOS -->
+                    <div class="tab" data-tab="pedidos">
+                        <i class="fas fa-shopping-cart"></i> Pedidos
                     </div>
                 </div>
 
@@ -726,8 +743,8 @@
                 <!-- Relatórios -->
                 <div id="relatorios" class="tab-content"></div>
 
-                <!-- Admin -->
-                <div id="admin" class="tab-content admin-only"></div>
+                <!-- NOVA ABA: Pedidos -->
+                <div id="pedidos" class="tab-content"></div>
             </div>
 
             <footer>
@@ -761,7 +778,7 @@
     </div>
 
     <script>
-        // ==================== CONFIGURAÇÃO FIREBASE ====================
+        // ==================== CONFIGURAÇÃO FIREBASE (INALTERADO) ====================
         const firebaseConfig = {
             apiKey: "AIzaSyD27wo1fLQLr__WsqKrDmw_kpMr8QXk4gE",
             authDomain: "controle-estoque-porter.firebaseapp.com",
@@ -771,7 +788,7 @@
             appId: "1:48491952679:web:22d3702f089e8584abac02"
         };
 
-        // ==================== DADOS INICIAIS ====================
+        // ==================== DADOS INICIAIS (INALTERADO) ====================
         const operadores = [
             "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
             "LUCAS VINICIUS DA SILVA", "CARLOS HENRIQUE FERREIRA LEITE", "LUIZ FERNANDO S MORYAMA DOS SANTOS",
@@ -798,7 +815,7 @@
             { nome: "Sabonete líquido", categoria: "Higiene" }
         ];
 
-        // ==================== ESTADO GLOBAL ====================
+        // ==================== ESTADO GLOBAL (ADICIONADO: pedidos, pedidosUnsubscribe) ====================
         window.state = {
             user: null,
             userProfile: null,
@@ -806,11 +823,15 @@
             movements: [],
             produtos: [],
             currentStock: [],
+            // NOVO: Array para pedidos
+            pedidos: [],
             activeTab: 'dashboard',
             currentPage: 1,
             itemsPerPage: 15,
             firebaseReady: false,
             movementsUnsubscribe: null,
+            // NOVO: Listener de pedidos
+            pedidosUnsubscribe: null,
             
             // Filtros
             searchHistory: '',
@@ -834,10 +855,14 @@
                 categoria: 'Limpeza',
                 quantidade: 1,
                 tipo: 'entrada'
-            }
+            },
+            
+            // NOVO: Filtros para pedidos
+            searchPedidos: '',
+            filterStatus: ''
         };
 
-        // ==================== ELEMENTOS DOM ====================
+        // ==================== ELEMENTOS DOM (INALTERADO) ====================
         const loadingScreen = document.getElementById('loadingScreen');
         const loadingMessage = document.getElementById('loadingMessage');
         const loginScreen = document.getElementById('loginScreen');
@@ -856,7 +881,7 @@
         const connectionStatus = document.getElementById('connectionStatus');
         const firebaseStatus = document.getElementById('firebaseStatus');
 
-        // ==================== FUNÇÕES AUXILIARES ====================
+        // ==================== FUNÇÕES AUXILIARES (INALTERADO) ====================
         function showToast(msg, type = 'success') {
             toastMessage.textContent = msg;
             toast.className = 'toast';
@@ -866,17 +891,25 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ==================== FUNÇÃO CORRIGIDA ====================
-        // CORREÇÃO: Tratar a data como data local, sem conversão UTC
+        // ==================== FUNÇÃO CORRIGIDA (INALTERADO) ====================
         function formatDate(dateStr) {
             try {
-                // Divide a string YYYY-MM-DD e cria a data considerando o fuso horário local
                 const [year, month, day] = dateStr.split('-').map(Number);
-                const date = new Date(year, month - 1, day); // month é 0-indexed no JavaScript
-                
+                const date = new Date(year, month - 1, day);
                 return date.toLocaleDateString('pt-BR');
             } catch {
                 return dateStr;
+            }
+        }
+
+        // NOVA FUNÇÃO: Formatar data ISO para exibição completa
+        function formatDateTime(isoString) {
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleDateString('pt-BR') + ' ' + 
+                       date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            } catch {
+                return isoString;
             }
         }
 
@@ -892,7 +925,19 @@
             return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
         }
 
-        // ==================== RECALCULAR ESTOQUE ====================
+        // NOVA FUNÇÃO: Retornar badge de status do pedido
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'aprovado':
+                    return '<span class="badge badge-success status-aprovado"><i class="fas fa-check-circle"></i> Aprovado</span>';
+                case 'recusado':
+                    return '<span class="badge badge-danger status-recusado"><i class="fas fa-times-circle"></i> Recusado</span>';
+                default:
+                    return '<span class="badge badge-warning status-pendente"><i class="fas fa-clock"></i> Pendente</span>';
+            }
+        }
+
+        // ==================== RECALCULAR ESTOQUE (INALTERADO) ====================
         function recalcularEstoque() {
             const stockMap = {};
             
@@ -931,12 +976,12 @@
             window.state.currentStock = Object.values(stockMap);
         }
 
-        // ==================== CARREGAR DADOS DO FIREBASE ====================
+        // ==================== CARREGAR DADOS DO FIREBASE (MODIFICADO: adicionado pedidos) ====================
         async function carregarDadosIniciaisFirebase() {
             const db = firebase.firestore();
             
             try {
-                // Carregar produtos
+                // Carregar produtos (INALTERADO)
                 const produtosSnapshot = await db.collection('produtos').get();
                 if (!produtosSnapshot.empty) {
                     window.state.produtos = produtosSnapshot.docs.map(doc => ({
@@ -944,7 +989,6 @@
                         ...doc.data()
                     }));
                 } else {
-                    // Criar produtos iniciais no Firebase
                     const batch = db.batch();
                     produtosIniciais.forEach(produto => {
                         const docRef = db.collection('produtos').doc();
@@ -954,7 +998,7 @@
                     window.state.produtos = produtosIniciais;
                 }
                 
-                // Carregar movimentações (as últimas 100 para performance)
+                // Carregar movimentações (INALTERADO)
                 const movementsSnapshot = await db.collection('movimentacoes')
                     .orderBy('data', 'desc')
                     .orderBy('hora', 'desc')
@@ -963,6 +1007,19 @@
                 
                 if (!movementsSnapshot.empty) {
                     window.state.movements = movementsSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                }
+                
+                // NOVO: Carregar pedidos
+                const pedidosSnapshot = await db.collection('pedidos')
+                    .orderBy('data', 'desc')
+                    .limit(100)
+                    .get();
+                
+                if (!pedidosSnapshot.empty) {
+                    window.state.pedidos = pedidosSnapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
                     }));
@@ -977,16 +1034,19 @@
             }
         }
 
-        // ==================== LISTENER EM TEMPO REAL ====================
+        // ==================== LISTENER EM TEMPO REAL (MODIFICADO: adicionado pedidos) ====================
         function iniciarListenerTempoReal() {
             const db = firebase.firestore();
             
-            // Cancelar listener anterior se existir
+            // Cancelar listeners anteriores
             if (window.state.movementsUnsubscribe) {
                 window.state.movementsUnsubscribe();
             }
+            if (window.state.pedidosUnsubscribe) {
+                window.state.pedidosUnsubscribe();
+            }
             
-            // Listener para movimentações
+            // Listener para movimentações (INALTERADO)
             window.state.movementsUnsubscribe = db.collection('movimentacoes')
                 .orderBy('data', 'desc')
                 .orderBy('hora', 'desc')
@@ -995,7 +1055,6 @@
                         const mov = { id: change.doc.id, ...change.doc.data() };
                         
                         if (change.type === 'added') {
-                            // Verificar se já não existe
                             if (!window.state.movements.some(m => m.id === mov.id)) {
                                 window.state.movements.unshift(mov);
                                 showToast(`🔄 Nova movimentação: ${mov.produto}`, 'success');
@@ -1012,32 +1071,58 @@
                     
                     recalcularEstoque();
                     
-                    // Atualizar interface se necessário
                     if (window.state.activeTab === 'historico') renderHistorico();
                     if (window.state.activeTab === 'estoque') renderEstoque();
                     if (window.state.activeTab === 'dashboard') renderDashboard();
                     
                     connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Sincronizado';
                     connectionStatus.className = 'connection-status online';
-                    
                 }, (error) => {
                     console.error('Erro no listener:', error);
                     connectionStatus.innerHTML = '<i class="fas fa-circle"></i> Erro de sincronia';
                     connectionStatus.className = 'connection-status offline';
                 });
             
-            // Listener para produtos
+            // NOVO: Listener para pedidos
+            window.state.pedidosUnsubscribe = db.collection('pedidos')
+                .orderBy('data', 'desc')
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        const pedido = { id: change.doc.id, ...change.doc.data() };
+                        
+                        if (change.type === 'added') {
+                            if (!window.state.pedidos.some(p => p.id === pedido.id)) {
+                                window.state.pedidos.unshift(pedido);
+                                if (window.state.activeTab !== 'pedidos') {
+                                    showToast(`📦 Novo pedido: ${pedido.produto}`, 'success');
+                                }
+                            }
+                        } else if (change.type === 'modified') {
+                            const index = window.state.pedidos.findIndex(p => p.id === pedido.id);
+                            if (index !== -1) {
+                                window.state.pedidos[index] = pedido;
+                            }
+                        } else if (change.type === 'removed') {
+                            window.state.pedidos = window.state.pedidos.filter(p => p.id !== pedido.id);
+                        }
+                    });
+                    
+                    if (window.state.activeTab === 'pedidos') renderPedidos();
+                }, (error) => {
+                    console.error('Erro no listener de pedidos:', error);
+                });
+            
+            // Listener para produtos (INALTERADO)
             db.collection('produtos').onSnapshot((snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === 'added' || change.type === 'modified') {
-                        // Atualizar lista de produtos
                         carregarDadosIniciaisFirebase();
                     }
                 });
             });
         }
 
-        // ==================== LOGIN ====================
+        // ==================== LOGIN (INALTERADO) ====================
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -1046,18 +1131,15 @@
             try {
                 loadingMessage.textContent = 'Autenticando...';
                 
-                // Login no Firebase
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Verificar perfil
                 const db = firebase.firestore();
                 const perfilDoc = await db.collection('usuarios').doc(user.uid).get();
                 
                 if (perfilDoc.exists) {
                     window.state.isAdmin = perfilDoc.data().perfil === 'admin';
                 } else {
-                    // Criar perfil se não existir
                     await db.collection('usuarios').doc(user.uid).set({
                         email: user.email,
                         perfil: email.includes('admin') ? 'admin' : 'usuario',
@@ -1071,16 +1153,9 @@
                 userEmail.textContent = user.email;
                 userProfile.textContent = window.state.isAdmin ? 'admin' : 'usuario';
                 
-                if (window.state.isAdmin) {
-                    document.querySelectorAll('.admin-only').forEach(el => {
-                        el.style.display = 'block';
-                    });
-                }
+                // NOTA: Classe admin-only removida pois a aba Admin foi substituída
                 
-                // Carregar dados do Firebase
                 await carregarDadosIniciaisFirebase();
-                
-                // Iniciar listener em tempo real
                 iniciarListenerTempoReal();
                 
                 loginScreen.style.display = 'none';
@@ -1097,11 +1172,14 @@
             }
         });
 
-        // ==================== LOGOUT ====================
+        // ==================== LOGOUT (INALTERADO) ====================
         logoutBtn.addEventListener('click', () => {
             firebase.auth().signOut();
             if (window.state.movementsUnsubscribe) {
                 window.state.movementsUnsubscribe();
+            }
+            if (window.state.pedidosUnsubscribe) {
+                window.state.pedidosUnsubscribe();
             }
             window.state.user = null;
             window.state.isAdmin = false;
@@ -1110,7 +1188,7 @@
             document.getElementById('loginForm').reset();
         });
 
-        // ==================== RENDERIZAÇÃO ====================
+        // ==================== RENDERIZAÇÃO (MODIFICADO: adicionado pedidos) ====================
         function renderCurrentTab() {
             switch(window.state.activeTab) {
                 case 'dashboard': renderDashboard(); break;
@@ -1118,18 +1196,17 @@
                 case 'historico': renderHistorico(); break;
                 case 'estoque': renderEstoque(); break;
                 case 'relatorios': renderRelatorios(); break;
+                case 'pedidos': renderPedidos(); break; // NOVO
             }
         }
 
-        // ==================== DASHBOARD ====================
+        // ==================== DASHBOARD (INALTERADO) ====================
         function renderDashboard() {
             const dashboard = document.getElementById('dashboard');
             
             const totalProdutos = window.state.currentStock.filter(p => p.estoque > 0).length;
             const totalEntradas = window.state.movements.filter(m => {
                 try {
-                    // Usando a função formatDate corrigida apenas para exibição
-                    // Para cálculos, precisamos comparar as strings diretamente
                     const dataMov = m.data;
                     const hoje = new Date();
                     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -1153,6 +1230,9 @@
                            m.tipo === 'saida';
                 } catch { return false; }
             }).reduce((acc, m) => acc + m.quantidade, 0);
+            
+            // NOVO: Adicionar estatísticas de pedidos ao dashboard
+            const pedidosPendentes = window.state.pedidos.filter(p => p.status === 'pendente' || !p.status).length;
             
             const lowStockItems = window.state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
 
@@ -1185,6 +1265,15 @@
                             <div class="stat-info">
                                 <h3>${totalSaidas}</h3>
                                 <p>Saídas este mês</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #25D366">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>${pedidosPendentes}</h3>
+                                <p>Pedidos pendentes</p>
                             </div>
                         </div>
                     </div>
@@ -1229,7 +1318,7 @@
             `;
         }
 
-        // ==================== MOVIMENTAÇÃO ====================
+        // ==================== MOVIMENTAÇÃO (INALTERADO) ====================
         function renderMovimentacao() {
             const mov = document.getElementById('movimentacao');
             
@@ -1335,7 +1424,6 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Verificar estoque para saídas
             if (movimento.tipo === 'saida') {
                 const stockInfo = window.state.currentStock.find(item => item.produto === movimento.produto);
                 if (stockInfo && stockInfo.estoque < movimento.quantidade) {
@@ -1345,19 +1433,16 @@
             }
 
             try {
-                // Salvar no Firebase (fonte da verdade)
                 const db = firebase.firestore();
                 const docRef = await db.collection('movimentacoes').add(movimento);
                 
                 showToast('✅ Movimentação sincronizada com todas as máquinas!');
                 
-                // Limpar formulário
                 document.getElementById('movData').value = new Date().toISOString().split('T')[0];
                 document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
                 document.getElementById('movProduto').value = '';
                 document.getElementById('movQuantidade').value = '1';
                 
-                // Mudar para aba de histórico
                 switchTab('historico');
                 
             } catch (error) {
@@ -1366,7 +1451,7 @@
             }
         }
 
-        // ==================== HISTÓRICO ====================
+        // ==================== HISTÓRICO (INALTERADO) ====================
         function renderHistorico() {
             const historico = document.getElementById('historico');
             
@@ -1517,7 +1602,7 @@
             });
         }
 
-        // ==================== ESTOQUE ====================
+        // ==================== ESTOQUE (INALTERADO) ====================
         function renderEstoque() {
             const estoque = document.getElementById('estoque');
             
@@ -1634,7 +1719,7 @@
             });
         }
 
-        // ==================== RELATÓRIOS ====================
+        // ==================== RELATÓRIOS (INALTERADO) ====================
         function generateStockReport() {
             window.state.reportType = 'estoque';
             window.state.reportData = [...window.state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
@@ -1928,7 +2013,204 @@
             document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
         }
 
-        // ==================== MODAL ====================
+        // ==================== NOVA FUNÇÃO: PEDIDOS ====================
+        async function handleEnviarPedido(e) {
+            e.preventDefault();
+            
+            const produto = document.getElementById('pedidoProduto').value;
+            const quantidade = parseInt(document.getElementById('pedidoQuantidade').value);
+            const operador = document.getElementById('pedidoOperador').value;
+            const observacao = document.getElementById('pedidoObservacao').value;
+            
+            if (!produto || !quantidade || !operador) {
+                showToast('Preencha todos os campos obrigatórios!', 'warning');
+                return;
+            }
+            
+            const pedido = {
+                produto: produto,
+                quantidade: quantidade,
+                operador: operador,
+                observacao: observacao || '',
+                data: new Date().toISOString(),
+                status: 'pendente',
+                usuario: window.state.user?.email,
+                userId: window.state.user?.uid,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                const db = firebase.firestore();
+                await db.collection('pedidos').add(pedido);
+                
+                // Formatar mensagem para WhatsApp
+                const dataFormatada = formatDateTime(new Date().toISOString());
+                const mensagem = `📦 *NOVO PEDIDO DE PRODUTO*\n\n*Produto:* ${produto}\n*Quantidade:* ${quantidade}\n*Operador:* ${operador}\n*Observação:* ${observacao || 'Nenhuma'}\n*Data:* ${dataFormatada}`;
+                
+                // Codificar e abrir WhatsApp
+                const mensagemCodificada = encodeURIComponent(mensagem);
+                window.open(`https://wa.me/554391452500?text=${mensagemCodificada}`, '_blank');
+                
+                // Limpar formulário
+                document.getElementById('pedidoProduto').value = '';
+                document.getElementById('pedidoQuantidade').value = '1';
+                document.getElementById('pedidoOperador').value = '';
+                document.getElementById('pedidoObservacao').value = '';
+                
+                showToast('✅ Pedido enviado com sucesso!');
+                
+            } catch (error) {
+                console.error('Erro ao enviar pedido:', error);
+                showToast('Erro ao enviar pedido. Tente novamente.', 'error');
+            }
+        }
+
+        function renderPedidos() {
+            const pedidosDiv = document.getElementById('pedidos');
+            
+            // Filtrar pedidos
+            let filtered = [...window.state.pedidos];
+            
+            if (window.state.searchPedidos) {
+                filtered = filtered.filter(p => 
+                    p.produto.toLowerCase().includes(window.state.searchPedidos.toLowerCase()) ||
+                    p.operador.toLowerCase().includes(window.state.searchPedidos.toLowerCase())
+                );
+            }
+            
+            if (window.state.filterStatus) {
+                filtered = filtered.filter(p => (p.status || 'pendente') === window.state.filterStatus);
+            }
+
+            pedidosDiv.innerHTML = `
+                <div class="card">
+                    <h2 class="card-title">
+                        <i class="fas fa-shopping-cart" style="color: #25D366;"></i>
+                        Solicitar Produtos ao Financeiro
+                    </h2>
+                    
+                    <!-- Formulário de Pedido -->
+                    <div class="pedido-form">
+                        <form id="pedidoForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Produto</label>
+                                    <select id="pedidoProduto" required>
+                                        <option value="">Selecione um produto</option>
+                                        ${window.state.produtos.map(p => 
+                                            `<option value="${p.nome}">${p.nome}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Quantidade</label>
+                                    <input type="number" id="pedidoQuantidade" min="1" value="1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Operador</label>
+                                    <select id="pedidoOperador" required>
+                                        <option value="">Selecione o operador</option>
+                                        ${operadores.map(op => `<option value="${op}">${op}</option>`).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Observação (opcional)</label>
+                                    <input type="text" id="pedidoObservacao" placeholder="Ex: Urgente, Observações...">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-whatsapp">
+                                <i class="fab fa-whatsapp"></i> Enviar Pedido via WhatsApp
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Histórico de Pedidos -->
+                    <h2 class="card-title">
+                        <i class="fas fa-history"></i>
+                        Histórico de Pedidos
+                    </h2>
+                    
+                    <div class="search-filter">
+                        <input type="text" id="searchPedidos" placeholder="Buscar por produto ou operador..." value="${window.state.searchPedidos}">
+                        <select id="filterStatus">
+                            <option value="">Todos os status</option>
+                            <option value="pendente" ${window.state.filterStatus === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                            <option value="aprovado" ${window.state.filterStatus === 'aprovado' ? 'selected' : ''}>✅ Aprovado</option>
+                            <option value="recusado" ${window.state.filterStatus === 'recusado' ? 'selected' : ''}>❌ Recusado</option>
+                        </select>
+                        <button id="clearPedidoFilters" class="btn btn-warning">
+                            <i class="fas fa-times"></i> Limpar filtros
+                        </button>
+                    </div>
+                    
+                    ${filtered.length === 0 ? `
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-cart"></i>
+                            <h3>Nenhum pedido encontrado</h3>
+                            <p>Os pedidos enviados aparecerão aqui automaticamente.</p>
+                        </div>
+                    ` : `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Operador</th>
+                                        <th>Observação</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filtered.map(p => `
+                                        <tr>
+                                            <td>${formatDateTime(p.data)}</td>
+                                            <td>${p.produto}</td>
+                                            <td>${p.quantidade}</td>
+                                            <td>${p.operador}</td>
+                                            <td>${p.observacao || '-'}</td>
+                                            <td>${getStatusBadge(p.status || 'pendente')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div style="margin-top: 20px; text-align: right;">
+                            <small>Total de pedidos: ${filtered.length}</small>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            // Event listeners
+            document.getElementById('pedidoForm')?.addEventListener('submit', handleEnviarPedido);
+            
+            document.getElementById('searchPedidos')?.addEventListener('input', (e) => {
+                window.state.searchPedidos = e.target.value;
+                renderPedidos();
+            });
+            
+            document.getElementById('filterStatus')?.addEventListener('change', (e) => {
+                window.state.filterStatus = e.target.value;
+                renderPedidos();
+            });
+            
+            document.getElementById('clearPedidoFilters')?.addEventListener('click', () => {
+                window.state.searchPedidos = '';
+                window.state.filterStatus = '';
+                renderPedidos();
+            });
+        }
+
+        // ==================== MODAL (INALTERADO) ====================
         function showConfirmModal(message, onConfirm) {
             confirmMessage.textContent = message;
             confirmModal.style.display = 'flex';
@@ -1949,7 +2231,7 @@
             });
         });
 
-        // ==================== TABS ====================
+        // ==================== TABS (MODIFICADO: removido admin) ====================
         function switchTab(tabId) {
             window.state.activeTab = tabId;
             window.state.currentPage = 1;
@@ -1980,15 +2262,13 @@
             });
         });
 
-        // ==================== INICIALIZAÇÃO ====================
+        // ==================== INICIALIZAÇÃO (INALTERADO) ====================
         async function initializeApp() {
             loadingMessage.textContent = 'Inicializando Firebase...';
             
             try {
-                // Inicializar Firebase
                 firebase.initializeApp(firebaseConfig);
                 
-                // Configurar persistência
                 const db = firebase.firestore();
                 await db.enablePersistence({ experimentalForceOwningTab: true })
                     .catch(err => {
@@ -1997,26 +2277,16 @@
                 
                 if (firebaseStatus) firebaseStatus.innerHTML = '✅ Firebase pronto';
                 
-                // Verificar se usuário já está logado
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
                         console.log('Usuário já logado:', user.email);
-                        // Login automático
                         window.state.user = user;
                         userEmail.textContent = user.email;
                         
-                        // Verificar perfil
                         const perfilDoc = await db.collection('usuarios').doc(user.uid).get();
                         window.state.isAdmin = perfilDoc.exists ? perfilDoc.data().perfil === 'admin' : false;
                         userProfile.textContent = window.state.isAdmin ? 'admin' : 'usuario';
                         
-                        if (window.state.isAdmin) {
-                            document.querySelectorAll('.admin-only').forEach(el => {
-                                el.style.display = 'block';
-                            });
-                        }
-                        
-                        // Carregar dados
                         await carregarDadosIniciaisFirebase();
                         iniciarListenerTempoReal();
                         
@@ -2025,7 +2295,6 @@
                         renderCurrentTab();
                         showToast('✅ Login automático realizado!');
                     } else {
-                        // Mostrar tela de login
                         setTimeout(() => {
                             loadingScreen.style.display = 'none';
                             loginScreen.style.display = 'flex';
