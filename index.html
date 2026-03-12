@@ -288,7 +288,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 1000px;
         }
 
         th, td {
@@ -602,6 +602,25 @@
         .status-aprovado { color: #27ae60; font-weight: 600; }
         .status-recusado { color: #e74c3c; font-weight: 600; }
 
+        .status-select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+            width: 120px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+
         footer {
             text-align: center;
             margin-top: 30px;
@@ -722,7 +741,7 @@
                     <div class="tab" data-tab="relatorios">
                         <i class="fas fa-file-pdf"></i> Relatórios
                     </div>
-                    <!-- ABA ADMIN SUBSTITUÍDA POR PEDIDOS -->
+                    <!-- ABA PEDIDOS -->
                     <div class="tab" data-tab="pedidos">
                         <i class="fas fa-shopping-cart"></i> Pedidos
                     </div>
@@ -743,7 +762,7 @@
                 <!-- Relatórios -->
                 <div id="relatorios" class="tab-content"></div>
 
-                <!-- NOVA ABA: Pedidos -->
+                <!-- Aba Pedidos -->
                 <div id="pedidos" class="tab-content"></div>
             </div>
 
@@ -823,14 +842,14 @@
             movements: [],
             produtos: [],
             currentStock: [],
-            // NOVO: Array para pedidos
+            // Array para pedidos
             pedidos: [],
             activeTab: 'dashboard',
             currentPage: 1,
             itemsPerPage: 15,
             firebaseReady: false,
             movementsUnsubscribe: null,
-            // NOVO: Listener de pedidos
+            // Listener de pedidos
             pedidosUnsubscribe: null,
             
             // Filtros
@@ -857,7 +876,7 @@
                 tipo: 'entrada'
             },
             
-            // NOVO: Filtros para pedidos
+            // Filtros para pedidos
             searchPedidos: '',
             filterStatus: ''
         };
@@ -881,7 +900,7 @@
         const connectionStatus = document.getElementById('connectionStatus');
         const firebaseStatus = document.getElementById('firebaseStatus');
 
-        // ==================== FUNÇÕES AUXILIARES (INALTERADO) ====================
+        // ==================== FUNÇÕES AUXILIARES ====================
         function showToast(msg, type = 'success') {
             toastMessage.textContent = msg;
             toast.className = 'toast';
@@ -891,7 +910,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ==================== FUNÇÃO CORRIGIDA (INALTERADO) ====================
         function formatDate(dateStr) {
             try {
                 const [year, month, day] = dateStr.split('-').map(Number);
@@ -902,7 +920,6 @@
             }
         }
 
-        // NOVA FUNÇÃO: Formatar data ISO para exibição completa
         function formatDateTime(isoString) {
             try {
                 const date = new Date(isoString);
@@ -925,13 +942,13 @@
             return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
         }
 
-        // NOVA FUNÇÃO: Retornar badge de status do pedido
+        // FUNÇÃO ATUALIZADA: Retornar badge de status do pedido com ícones
         function getStatusBadge(status) {
             switch(status) {
-                case 'aprovado':
-                    return '<span class="badge badge-success status-aprovado"><i class="fas fa-check-circle"></i> Aprovado</span>';
-                case 'recusado':
-                    return '<span class="badge badge-danger status-recusado"><i class="fas fa-times-circle"></i> Recusado</span>';
+                case 'entregue':
+                    return '<span class="badge badge-success status-aprovado"><i class="fas fa-check-circle"></i> Entregue</span>';
+                case 'cancelado':
+                    return '<span class="badge badge-danger status-recusado"><i class="fas fa-times-circle"></i> Cancelado</span>';
                 default:
                     return '<span class="badge badge-warning status-pendente"><i class="fas fa-clock"></i> Pendente</span>';
             }
@@ -976,12 +993,12 @@
             window.state.currentStock = Object.values(stockMap);
         }
 
-        // ==================== CARREGAR DADOS DO FIREBASE (MODIFICADO: adicionado pedidos) ====================
+        // ==================== CARREGAR DADOS DO FIREBASE ====================
         async function carregarDadosIniciaisFirebase() {
             const db = firebase.firestore();
             
             try {
-                // Carregar produtos (INALTERADO)
+                // Carregar produtos
                 const produtosSnapshot = await db.collection('produtos').get();
                 if (!produtosSnapshot.empty) {
                     window.state.produtos = produtosSnapshot.docs.map(doc => ({
@@ -998,7 +1015,7 @@
                     window.state.produtos = produtosIniciais;
                 }
                 
-                // Carregar movimentações (INALTERADO)
+                // Carregar movimentações
                 const movementsSnapshot = await db.collection('movimentacoes')
                     .orderBy('data', 'desc')
                     .orderBy('hora', 'desc')
@@ -1012,7 +1029,7 @@
                     }));
                 }
                 
-                // NOVO: Carregar pedidos
+                // Carregar pedidos
                 const pedidosSnapshot = await db.collection('pedidos')
                     .orderBy('data', 'desc')
                     .limit(100)
@@ -1034,7 +1051,7 @@
             }
         }
 
-        // ==================== LISTENER EM TEMPO REAL (MODIFICADO: adicionado pedidos) ====================
+        // ==================== LISTENER EM TEMPO REAL ====================
         function iniciarListenerTempoReal() {
             const db = firebase.firestore();
             
@@ -1046,7 +1063,7 @@
                 window.state.pedidosUnsubscribe();
             }
             
-            // Listener para movimentações (INALTERADO)
+            // Listener para movimentações
             window.state.movementsUnsubscribe = db.collection('movimentacoes')
                 .orderBy('data', 'desc')
                 .orderBy('hora', 'desc')
@@ -1083,7 +1100,7 @@
                     connectionStatus.className = 'connection-status offline';
                 });
             
-            // NOVO: Listener para pedidos
+            // Listener para pedidos
             window.state.pedidosUnsubscribe = db.collection('pedidos')
                 .orderBy('data', 'desc')
                 .onSnapshot((snapshot) => {
@@ -1101,9 +1118,15 @@
                             const index = window.state.pedidos.findIndex(p => p.id === pedido.id);
                             if (index !== -1) {
                                 window.state.pedidos[index] = pedido;
+                                if (window.state.activeTab === 'pedidos') {
+                                    showToast(`🔄 Status do pedido atualizado`, 'success');
+                                }
                             }
                         } else if (change.type === 'removed') {
                             window.state.pedidos = window.state.pedidos.filter(p => p.id !== pedido.id);
+                            if (window.state.activeTab === 'pedidos') {
+                                showToast(`🗑️ Pedido excluído`, 'warning');
+                            }
                         }
                     });
                     
@@ -1112,7 +1135,7 @@
                     console.error('Erro no listener de pedidos:', error);
                 });
             
-            // Listener para produtos (INALTERADO)
+            // Listener para produtos
             db.collection('produtos').onSnapshot((snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === 'added' || change.type === 'modified') {
@@ -1153,8 +1176,6 @@
                 userEmail.textContent = user.email;
                 userProfile.textContent = window.state.isAdmin ? 'admin' : 'usuario';
                 
-                // NOTA: Classe admin-only removida pois a aba Admin foi substituída
-                
                 await carregarDadosIniciaisFirebase();
                 iniciarListenerTempoReal();
                 
@@ -1188,7 +1209,7 @@
             document.getElementById('loginForm').reset();
         });
 
-        // ==================== RENDERIZAÇÃO (MODIFICADO: adicionado pedidos) ====================
+        // ==================== RENDERIZAÇÃO ====================
         function renderCurrentTab() {
             switch(window.state.activeTab) {
                 case 'dashboard': renderDashboard(); break;
@@ -1196,7 +1217,7 @@
                 case 'historico': renderHistorico(); break;
                 case 'estoque': renderEstoque(); break;
                 case 'relatorios': renderRelatorios(); break;
-                case 'pedidos': renderPedidos(); break; // NOVO
+                case 'pedidos': renderPedidos(); break;
             }
         }
 
@@ -1231,8 +1252,8 @@
                 } catch { return false; }
             }).reduce((acc, m) => acc + m.quantidade, 0);
             
-            // NOVO: Adicionar estatísticas de pedidos ao dashboard
-            const pedidosPendentes = window.state.pedidos.filter(p => p.status === 'pendente' || !p.status).length;
+            // Estatísticas de pedidos
+            const pedidosPendentes = window.state.pedidos.filter(p => (p.status || 'pendente') === 'pendente').length;
             
             const lowStockItems = window.state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
 
@@ -1434,7 +1455,7 @@
 
             try {
                 const db = firebase.firestore();
-                const docRef = await db.collection('movimentacoes').add(movimento);
+                await db.collection('movimentacoes').add(movimento);
                 
                 showToast('✅ Movimentação sincronizada com todas as máquinas!');
                 
@@ -2013,7 +2034,43 @@
             document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
         }
 
-        // ==================== NOVA FUNÇÃO: PEDIDOS ====================
+        // ==================== FUNÇÕES NOVAS PARA PEDIDOS ====================
+        
+        // Função para alterar status do pedido
+        async function handleAlterarStatus(pedidoId, novoStatus) {
+            try {
+                const db = firebase.firestore();
+                await db.collection('pedidos').doc(pedidoId).update({
+                    status: novoStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedBy: window.state.user?.email
+                });
+                
+                showToast(`✅ Status alterado para ${novoStatus}`, 'success');
+                
+            } catch (error) {
+                console.error('Erro ao alterar status:', error);
+                showToast('Erro ao alterar status', 'error');
+            }
+        }
+
+        // Função para excluir pedido com confirmação
+        async function handleExcluirPedido(pedidoId) {
+            showConfirmModal('Tem certeza que deseja excluir este pedido?', async () => {
+                try {
+                    const db = firebase.firestore();
+                    await db.collection('pedidos').doc(pedidoId).delete();
+                    
+                    showToast('🗑️ Pedido excluído com sucesso', 'warning');
+                    
+                } catch (error) {
+                    console.error('Erro ao excluir pedido:', error);
+                    showToast('Erro ao excluir pedido', 'error');
+                }
+            });
+        }
+
+        // Função para enviar pedido
         async function handleEnviarPedido(e) {
             e.preventDefault();
             
@@ -2065,6 +2122,7 @@
             }
         }
 
+        // ==================== RENDER PEDIDOS (ATUALIZADO) ====================
         function renderPedidos() {
             const pedidosDiv = document.getElementById('pedidos');
             
@@ -2141,8 +2199,8 @@
                         <select id="filterStatus">
                             <option value="">Todos os status</option>
                             <option value="pendente" ${window.state.filterStatus === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
-                            <option value="aprovado" ${window.state.filterStatus === 'aprovado' ? 'selected' : ''}>✅ Aprovado</option>
-                            <option value="recusado" ${window.state.filterStatus === 'recusado' ? 'selected' : ''}>❌ Recusado</option>
+                            <option value="entregue" ${window.state.filterStatus === 'entregue' ? 'selected' : ''}>✅ Entregue</option>
+                            <option value="cancelado" ${window.state.filterStatus === 'cancelado' ? 'selected' : ''}>❌ Cancelado</option>
                         </select>
                         <button id="clearPedidoFilters" class="btn btn-warning">
                             <i class="fas fa-times"></i> Limpar filtros
@@ -2162,10 +2220,11 @@
                                     <tr>
                                         <th>Data</th>
                                         <th>Produto</th>
-                                        <th>Quantidade</th>
+                                        <th>Qtd</th>
                                         <th>Operador</th>
                                         <th>Observação</th>
                                         <th>Status</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2177,6 +2236,21 @@
                                             <td>${p.operador}</td>
                                             <td>${p.observacao || '-'}</td>
                                             <td>${getStatusBadge(p.status || 'pendente')}</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <!-- Dropdown para alterar status -->
+                                                    <select class="status-select" onchange="handleAlterarStatus('${p.id}', this.value)">
+                                                        <option value="pendente" ${(p.status || 'pendente') === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                                                        <option value="entregue" ${p.status === 'entregue' ? 'selected' : ''}>✅ Entregue</option>
+                                                        <option value="cancelado" ${p.status === 'cancelado' ? 'selected' : ''}>❌ Cancelado</option>
+                                                    </select>
+                                                    
+                                                    <!-- Botão excluir -->
+                                                    <button class="btn btn-danger btn-sm btn-icon" onclick="handleExcluirPedido('${p.id}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -2231,7 +2305,7 @@
             });
         });
 
-        // ==================== TABS (MODIFICADO: removido admin) ====================
+        // ==================== TABS ====================
         function switchTab(tabId) {
             window.state.activeTab = tabId;
             window.state.currentPage = 1;
@@ -2262,7 +2336,7 @@
             });
         });
 
-        // ==================== INICIALIZAÇÃO (INALTERADO) ====================
+        // ==================== INICIALIZAÇÃO ====================
         async function initializeApp() {
             loadingMessage.textContent = 'Inicializando Firebase...';
             
@@ -2312,6 +2386,10 @@
                 }, 1500);
             }
         }
+
+        // Tornar funções globais para acesso no HTML
+        window.handleAlterarStatus = handleAlterarStatus;
+        window.handleExcluirPedido = handleExcluirPedido;
 
         // Iniciar
         initializeApp();
