@@ -798,7 +798,7 @@
     </div>
 
     <script>
-        // ==================== CONFIGURAÇÃO FIREBASE (INALTERADO) ====================
+        // ==================== CONFIGURAÇÃO FIREBASE ====================
         const firebaseConfig = {
             apiKey: "AIzaSyD27wo1fLQLr__WsqKrDmw_kpMr8QXk4gE",
             authDomain: "controle-estoque-porter.firebaseapp.com",
@@ -808,7 +808,7 @@
             appId: "1:48491952679:web:22d3702f089e8584abac02"
         };
 
-        // ==================== DADOS INICIAIS (INALTERADO) ====================
+        // ==================== DADOS INICIAIS ====================
         const operadores = [
             "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
             "VINICIUS DA SILVA", "CARLOS HENRIQUE FERREIRA LEITE", "LUIZ FERNANDO S MORYAMA DOS SANTOS",
@@ -835,7 +835,7 @@
             { nome: "Sabonete líquido", categoria: "Higiene" }
         ];
 
-        // ==================== ESTADO GLOBAL (ADICIONADO: pedidos, pedidosUnsubscribe) ====================
+        // ==================== ESTADO GLOBAL ====================
         window.state = {
             user: null,
             userProfile: null,
@@ -843,14 +843,12 @@
             movements: [],
             produtos: [],
             currentStock: [],
-            // Array para pedidos
             pedidos: [],
             activeTab: 'dashboard',
             currentPage: 1,
             itemsPerPage: 15,
             firebaseReady: false,
             movementsUnsubscribe: null,
-            // Listener de pedidos
             pedidosUnsubscribe: null,
             
             // Filtros
@@ -882,7 +880,7 @@
             filterStatus: ''
         };
 
-        // ==================== ELEMENTOS DOM (INALTERADO) ====================
+        // ==================== ELEMENTOS DOM ====================
         const loadingScreen = document.getElementById('loadingScreen');
         const loadingMessage = document.getElementById('loadingMessage');
         const loginScreen = document.getElementById('loginScreen');
@@ -943,7 +941,6 @@
             return { text: 'Normal', class: 'stock-normal', badge: 'badge-success' };
         }
 
-        // FUNÇÃO ATUALIZADA: Retornar badge de status do pedido com ícones
         function getStatusBadge(status) {
             switch(status) {
                 case 'entregue':
@@ -955,11 +952,19 @@
             }
         }
 
-        // ==================== RECALCULAR ESTOQUE (INALTERADO) ====================
+        // ==================== RECALCULAR ESTOQUE (CORRIGIDO) ====================
         function recalcularEstoque() {
             const stockMap = {};
             
-            window.state.movements.forEach(mov => {
+            // Ordenar movimentações por data e hora para garantir cálculo correto
+            const movementsOrdenadas = [...window.state.movements].sort((a, b) => {
+                if (a.data === b.data) {
+                    return a.hora.localeCompare(b.hora);
+                }
+                return a.data.localeCompare(b.data);
+            });
+            
+            movementsOrdenadas.forEach(mov => {
                 if (!stockMap[mov.produto]) {
                     stockMap[mov.produto] = {
                         produto: mov.produto,
@@ -992,6 +997,21 @@
             });
 
             window.state.currentStock = Object.values(stockMap);
+            
+            // Verificar se há estoque negativo e registrar warning
+            const negativos = window.state.currentStock.filter(item => item.estoque < 0);
+            if (negativos.length > 0) {
+                console.warn('⚠️ Produtos com estoque negativo detectado:', negativos);
+            }
+        }
+
+        // ==================== CALCULAR ESTOQUE ATUAL DE UM PRODUTO ====================
+        function calcularEstoqueAtualProduto(produto) {
+            return window.state.movements
+                .filter(m => m.produto === produto)
+                .reduce((acc, m) => {
+                    return m.tipo === 'entrada' ? acc + m.quantidade : acc - m.quantidade;
+                }, 0);
         }
 
         // ==================== CARREGAR DADOS DO FIREBASE ====================
@@ -1052,7 +1072,7 @@
             }
         }
 
-        // ==================== LISTENER EM TEMPO REAL ====================
+        // ==================== LISTENER EM TEMPO REAL (CORRIGIDO) ====================
         function iniciarListenerTempoReal() {
             const db = firebase.firestore();
             
@@ -1069,25 +1089,32 @@
                 .orderBy('data', 'desc')
                 .orderBy('hora', 'desc')
                 .onSnapshot((snapshot) => {
+                    let precisaRecalcular = false;
+                    
                     snapshot.docChanges().forEach((change) => {
                         const mov = { id: change.doc.id, ...change.doc.data() };
                         
                         if (change.type === 'added') {
                             if (!window.state.movements.some(m => m.id === mov.id)) {
                                 window.state.movements.unshift(mov);
+                                precisaRecalcular = true;
                                 showToast(`🔄 Nova movimentação: ${mov.produto}`, 'success');
                             }
                         } else if (change.type === 'modified') {
                             const index = window.state.movements.findIndex(m => m.id === mov.id);
                             if (index !== -1) {
                                 window.state.movements[index] = mov;
+                                precisaRecalcular = true;
                             }
                         } else if (change.type === 'removed') {
                             window.state.movements = window.state.movements.filter(m => m.id !== mov.id);
+                            precisaRecalcular = true;
                         }
                     });
                     
-                    recalcularEstoque();
+                    if (precisaRecalcular) {
+                        recalcularEstoque();
+                    }
                     
                     if (window.state.activeTab === 'historico') renderHistorico();
                     if (window.state.activeTab === 'estoque') renderEstoque();
@@ -1146,7 +1173,7 @@
             });
         }
 
-        // ==================== LOGIN (INALTERADO) ====================
+        // ==================== LOGIN ====================
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -1194,7 +1221,7 @@
             }
         });
 
-        // ==================== LOGOUT (INALTERADO) ====================
+        // ==================== LOGOUT ====================
         logoutBtn.addEventListener('click', () => {
             firebase.auth().signOut();
             if (window.state.movementsUnsubscribe) {
@@ -1222,7 +1249,7 @@
             }
         }
 
-        // ==================== DASHBOARD (INALTERADO) ====================
+        // ==================== DASHBOARD ====================
         function renderDashboard() {
             const dashboard = document.getElementById('dashboard');
             
@@ -1253,7 +1280,6 @@
                 } catch { return false; }
             }).reduce((acc, m) => acc + m.quantidade, 0);
             
-            // Estatísticas de pedidos
             const pedidosPendentes = window.state.pedidos.filter(p => (p.status || 'pendente') === 'pendente').length;
             
             const lowStockItems = window.state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
@@ -1340,7 +1366,7 @@
             `;
         }
 
-        // ==================== MOVIMENTAÇÃO (INALTERADO) ====================
+        // ==================== MOVIMENTAÇÃO (CORRIGIDO) ====================
         function renderMovimentacao() {
             const mov = document.getElementById('movimentacao');
             
@@ -1430,6 +1456,7 @@
             });
         }
 
+        // ==================== HANDLE SAVE MOVEMENT (CORRIGIDO - VERSÃO FINAL) ====================
         async function handleSaveMovement(e) {
             e.preventDefault();
             
@@ -1446,34 +1473,67 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
+            // VALIDAÇÃO MAIS ROBUSTA PARA SAÍDAS
             if (movimento.tipo === 'saida') {
-                const stockInfo = window.state.currentStock.find(item => item.produto === movimento.produto);
-                if (stockInfo && stockInfo.estoque < movimento.quantidade) {
-                    showToast(`Estoque insuficiente! Disponível: ${stockInfo.estoque}`, 'error');
+                // Calcular estoque atual considerando TODAS as movimentações existentes
+                const estoqueAtual = calcularEstoqueAtualProduto(movimento.produto);
+                
+                if (estoqueAtual < movimento.quantidade) {
+                    showToast(`⚠️ Estoque insuficiente! Disponível: ${estoqueAtual}`, 'error');
                     return;
                 }
             }
 
             try {
                 const db = firebase.firestore();
-                await db.collection('movimentacoes').add(movimento);
+                
+                // USAR TRANSAÇÃO ATÔMICA para garantir consistência total
+                await db.runTransaction(async (transaction) => {
+                    // Buscar TODAS as movimentações deste produto para cálculo preciso
+                    const movementsQuery = await transaction.get(
+                        db.collection('movimentacoes')
+                          .where('produto', '==', movimento.produto)
+                    );
+                    
+                    // Calcular estoque dentro da transação
+                    let estoqueCalculado = 0;
+                    movementsQuery.docs.forEach(doc => {
+                        const mov = doc.data();
+                        if (mov.tipo === 'entrada') {
+                            estoqueCalculado += mov.quantidade;
+                        } else {
+                            estoqueCalculado -= mov.quantidade;
+                        }
+                    });
+                    
+                    // Validar novamente para saídas
+                    if (movimento.tipo === 'saida' && estoqueCalculado < movimento.quantidade) {
+                        throw new Error(`Estoque insuficiente. Disponível: ${estoqueCalculado}`);
+                    }
+                    
+                    // Adicionar a nova movimentação
+                    const newMovRef = db.collection('movimentacoes').doc();
+                    transaction.set(newMovRef, movimento);
+                });
                 
                 showToast('✅ Movimentação sincronizada com todas as máquinas!');
                 
+                // Limpar formulário
                 document.getElementById('movData').value = new Date().toISOString().split('T')[0];
                 document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
                 document.getElementById('movProduto').value = '';
                 document.getElementById('movQuantidade').value = '1';
                 
+                // Ir para histórico
                 switchTab('historico');
                 
             } catch (error) {
                 console.error('Erro ao salvar:', error);
-                showToast('Erro ao sincronizar. Tente novamente.', 'error');
+                showToast(error.message || 'Erro ao sincronizar. Tente novamente.', 'error');
             }
         }
 
-        // ==================== HISTÓRICO (INALTERADO) ====================
+        // ==================== HISTÓRICO ====================
         function renderHistorico() {
             const historico = document.getElementById('historico');
             
@@ -1624,7 +1684,7 @@
             });
         }
 
-        // ==================== ESTOQUE (INALTERADO) ====================
+        // ==================== ESTOQUE ====================
         function renderEstoque() {
             const estoque = document.getElementById('estoque');
             
@@ -1741,7 +1801,7 @@
             });
         }
 
-        // ==================== RELATÓRIOS (INALTERADO) ====================
+        // ==================== RELATÓRIOS ====================
         function generateStockReport() {
             window.state.reportType = 'estoque';
             window.state.reportData = [...window.state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
@@ -2035,9 +2095,7 @@
             document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
         }
 
-        // ==================== FUNÇÕES NOVAS PARA PEDIDOS ====================
-        
-        // Função para alterar status do pedido
+        // ==================== FUNÇÕES PARA PEDIDOS ====================
         async function handleAlterarStatus(pedidoId, novoStatus) {
             try {
                 const db = firebase.firestore();
@@ -2055,7 +2113,6 @@
             }
         }
 
-        // Função para excluir pedido com confirmação
         async function handleExcluirPedido(pedidoId) {
             showConfirmModal('Tem certeza que deseja excluir este pedido?', async () => {
                 try {
@@ -2071,7 +2128,6 @@
             });
         }
 
-        // Função para enviar pedido
         async function handleEnviarPedido(e) {
             e.preventDefault();
             
@@ -2101,15 +2157,12 @@
                 const db = firebase.firestore();
                 await db.collection('pedidos').add(pedido);
                 
-                // Formatar mensagem para WhatsApp
                 const dataFormatada = formatDateTime(new Date().toISOString());
                 const mensagem = `📦 *NOVO PEDIDO DE PRODUTO*\n\n*Produto:* ${produto}\n*Quantidade:* ${quantidade}\n*Operador:* ${operador}\n*Observação:* ${observacao || 'Nenhuma'}\n*Data:* ${dataFormatada}`;
                 
-                // Codificar e abrir WhatsApp
                 const mensagemCodificada = encodeURIComponent(mensagem);
                 window.open(`https://wa.me/554391452500?text=${mensagemCodificada}`, '_blank');
                 
-                // Limpar formulário
                 document.getElementById('pedidoProduto').value = '';
                 document.getElementById('pedidoQuantidade').value = '1';
                 document.getElementById('pedidoOperador').value = '';
@@ -2123,11 +2176,9 @@
             }
         }
 
-        // ==================== RENDER PEDIDOS (ATUALIZADO) ====================
         function renderPedidos() {
             const pedidosDiv = document.getElementById('pedidos');
             
-            // Filtrar pedidos
             let filtered = [...window.state.pedidos];
             
             if (window.state.searchPedidos) {
@@ -2148,7 +2199,6 @@
                         Solicitar Produtos ao Financeiro
                     </h2>
                     
-                    <!-- Formulário de Pedido -->
                     <div class="pedido-form">
                         <form id="pedidoForm">
                             <div class="form-row">
@@ -2189,7 +2239,6 @@
                         </form>
                     </div>
                     
-                    <!-- Histórico de Pedidos -->
                     <h2 class="card-title">
                         <i class="fas fa-history"></i>
                         Histórico de Pedidos
@@ -2239,14 +2288,12 @@
                                             <td>${getStatusBadge(p.status || 'pendente')}</td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <!-- Dropdown para alterar status -->
                                                     <select class="status-select" onchange="handleAlterarStatus('${p.id}', this.value)">
                                                         <option value="pendente" ${(p.status || 'pendente') === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
                                                         <option value="entregue" ${p.status === 'entregue' ? 'selected' : ''}>✅ Entregue</option>
                                                         <option value="cancelado" ${p.status === 'cancelado' ? 'selected' : ''}>❌ Cancelado</option>
                                                     </select>
                                                     
-                                                    <!-- Botão excluir -->
                                                     <button class="btn btn-danger btn-sm btn-icon" onclick="handleExcluirPedido('${p.id}')">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -2265,7 +2312,6 @@
                 </div>
             `;
 
-            // Event listeners
             document.getElementById('pedidoForm')?.addEventListener('submit', handleEnviarPedido);
             
             document.getElementById('searchPedidos')?.addEventListener('input', (e) => {
@@ -2285,7 +2331,7 @@
             });
         }
 
-        // ==================== MODAL (INALTERADO) ====================
+        // ==================== MODAL ====================
         function showConfirmModal(message, onConfirm) {
             confirmMessage.textContent = message;
             confirmModal.style.display = 'flex';
