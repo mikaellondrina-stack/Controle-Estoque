@@ -698,7 +698,6 @@
                 </form>
                 
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--gray);">
-
                     <p id="firebaseStatus" style="color: var(--success);">✅ Conectando...</p>
                 </div>
             </div>
@@ -742,28 +741,16 @@
                     <div class="tab" data-tab="relatorios">
                         <i class="fas fa-file-pdf"></i> Relatórios
                     </div>
-                    <!-- ABA PEDIDOS -->
                     <div class="tab" data-tab="pedidos">
                         <i class="fas fa-shopping-cart"></i> Pedidos
                     </div>
                 </div>
 
-                <!-- Dashboard -->
                 <div id="dashboard" class="tab-content active"></div>
-
-                <!-- Movimentação -->
                 <div id="movimentacao" class="tab-content"></div>
-
-                <!-- Histórico -->
                 <div id="historico" class="tab-content"></div>
-
-                <!-- Estoque -->
                 <div id="estoque" class="tab-content"></div>
-
-                <!-- Relatórios -->
                 <div id="relatorios" class="tab-content"></div>
-
-                <!-- Aba Pedidos -->
                 <div id="pedidos" class="tab-content"></div>
             </div>
 
@@ -812,8 +799,7 @@
         const operadores = [
             "MARIO ALEXANDRE CLEMENTIN", "VANIA DO SOCORRO LEOCADIO", "JACKELINE ARAUJO SAMPAIO DIAS",
             "VINICIUS DA SILVA", "CARLOS HENRIQUE FERREIRA LEITE", "LUIZ FERNANDO S MORYAMA DOS SANTOS",
-            "ERICK DE SOUZA RODRIGUES", 
-            "DEISY SANTOS CRUZ", "DANIELE DA SILVA ROCHA",
+            "ERICK DE SOUZA RODRIGUES", "DEISY SANTOS CRUZ", "DANIELE DA SILVA ROCHA",
             "ANA BEATRIZ PEREIRA", "VANESSA LOPES SOUZA DE OLIVEIRA",
             "MARIA LUIZA ALEIXO ANTUNES", "LUDMILA R CASSIANO",
             "MARIA GABRIELA ANTONIO", "DENISE CRISTINA DE SOUSA", "EDSON SILVA MACÊDO",
@@ -851,7 +837,6 @@
             movementsUnsubscribe: null,
             pedidosUnsubscribe: null,
             
-            // Filtros
             searchHistory: '',
             filterType: '',
             filterProduct: '',
@@ -859,7 +844,6 @@
             searchStock: '',
             filterCategory: '',
             
-            // Relatórios
             reportType: null,
             reportStartDate: new Date(new Date().setDate(1)).toISOString().split('T')[0],
             reportEndDate: new Date().toISOString().split('T')[0],
@@ -875,7 +859,6 @@
                 tipo: 'entrada'
             },
             
-            // Filtros para pedidos
             searchPedidos: '',
             filterStatus: ''
         };
@@ -929,12 +912,6 @@
             }
         }
 
-        function getMonthName(month) {
-            const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-            return months[parseInt(month)-1] || month;
-        }
-
         function getStockStatus(estoque) {
             if (estoque <= 5) return { text: 'Crítico', class: 'stock-critical', badge: 'badge-danger' };
             if (estoque <= 15) return { text: 'Baixo', class: 'stock-low', badge: 'badge-warning' };
@@ -952,19 +929,11 @@
             }
         }
 
-        // ==================== RECALCULAR ESTOQUE (CORRIGIDO) ====================
+        // ==================== RECALCULAR ESTOQUE ====================
         function recalcularEstoque() {
             const stockMap = {};
             
-            // Ordenar movimentações por data e hora para garantir cálculo correto
-            const movementsOrdenadas = [...window.state.movements].sort((a, b) => {
-                if (a.data === b.data) {
-                    return a.hora.localeCompare(b.hora);
-                }
-                return a.data.localeCompare(b.data);
-            });
-            
-            movementsOrdenadas.forEach(mov => {
+            window.state.movements.forEach(mov => {
                 if (!stockMap[mov.produto]) {
                     stockMap[mov.produto] = {
                         produto: mov.produto,
@@ -997,21 +966,6 @@
             });
 
             window.state.currentStock = Object.values(stockMap);
-            
-            // Verificar se há estoque negativo e registrar warning
-            const negativos = window.state.currentStock.filter(item => item.estoque < 0);
-            if (negativos.length > 0) {
-                console.warn('⚠️ Produtos com estoque negativo detectado:', negativos);
-            }
-        }
-
-        // ==================== CALCULAR ESTOQUE ATUAL DE UM PRODUTO ====================
-        function calcularEstoqueAtualProduto(produto) {
-            return window.state.movements
-                .filter(m => m.produto === produto)
-                .reduce((acc, m) => {
-                    return m.tipo === 'entrada' ? acc + m.quantidade : acc - m.quantidade;
-                }, 0);
         }
 
         // ==================== CARREGAR DADOS DO FIREBASE ====================
@@ -1019,7 +973,6 @@
             const db = firebase.firestore();
             
             try {
-                // Carregar produtos
                 const produtosSnapshot = await db.collection('produtos').get();
                 if (!produtosSnapshot.empty) {
                     window.state.produtos = produtosSnapshot.docs.map(doc => ({
@@ -1036,7 +989,6 @@
                     window.state.produtos = produtosIniciais;
                 }
                 
-                // Carregar movimentações
                 const movementsSnapshot = await db.collection('movimentacoes')
                     .orderBy('data', 'desc')
                     .orderBy('hora', 'desc')
@@ -1050,7 +1002,6 @@
                     }));
                 }
                 
-                // Carregar pedidos
                 const pedidosSnapshot = await db.collection('pedidos')
                     .orderBy('data', 'desc')
                     .limit(100)
@@ -1072,11 +1023,10 @@
             }
         }
 
-        // ==================== LISTENER EM TEMPO REAL (CORRIGIDO) ====================
+        // ==================== LISTENER EM TEMPO REAL ====================
         function iniciarListenerTempoReal() {
             const db = firebase.firestore();
             
-            // Cancelar listeners anteriores
             if (window.state.movementsUnsubscribe) {
                 window.state.movementsUnsubscribe();
             }
@@ -1084,37 +1034,29 @@
                 window.state.pedidosUnsubscribe();
             }
             
-            // Listener para movimentações
             window.state.movementsUnsubscribe = db.collection('movimentacoes')
                 .orderBy('data', 'desc')
                 .orderBy('hora', 'desc')
                 .onSnapshot((snapshot) => {
-                    let precisaRecalcular = false;
-                    
                     snapshot.docChanges().forEach((change) => {
                         const mov = { id: change.doc.id, ...change.doc.data() };
                         
                         if (change.type === 'added') {
                             if (!window.state.movements.some(m => m.id === mov.id)) {
                                 window.state.movements.unshift(mov);
-                                precisaRecalcular = true;
                                 showToast(`🔄 Nova movimentação: ${mov.produto}`, 'success');
                             }
                         } else if (change.type === 'modified') {
                             const index = window.state.movements.findIndex(m => m.id === mov.id);
                             if (index !== -1) {
                                 window.state.movements[index] = mov;
-                                precisaRecalcular = true;
                             }
                         } else if (change.type === 'removed') {
                             window.state.movements = window.state.movements.filter(m => m.id !== mov.id);
-                            precisaRecalcular = true;
                         }
                     });
                     
-                    if (precisaRecalcular) {
-                        recalcularEstoque();
-                    }
+                    recalcularEstoque();
                     
                     if (window.state.activeTab === 'historico') renderHistorico();
                     if (window.state.activeTab === 'estoque') renderEstoque();
@@ -1128,7 +1070,6 @@
                     connectionStatus.className = 'connection-status offline';
                 });
             
-            // Listener para pedidos
             window.state.pedidosUnsubscribe = db.collection('pedidos')
                 .orderBy('data', 'desc')
                 .onSnapshot((snapshot) => {
@@ -1163,7 +1104,6 @@
                     console.error('Erro no listener de pedidos:', error);
                 });
             
-            // Listener para produtos
             db.collection('produtos').onSnapshot((snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === 'added' || change.type === 'modified') {
@@ -1237,7 +1177,102 @@
             document.getElementById('loginForm').reset();
         });
 
-        // ==================== RENDERIZAÇÃO ====================
+        // ==================== HANDLE SAVE MOVEMENT (VERSÃO FINAL CORRIGIDA) ====================
+        async function handleSaveMovement(e) {
+            e.preventDefault();
+            
+            const movimento = {
+                data: document.getElementById('movData').value,
+                hora: document.getElementById('movHora').value,
+                operador: document.getElementById('movOperador').value,
+                produto: document.getElementById('movProduto').value,
+                categoria: document.getElementById('movCategoria').value,
+                quantidade: parseInt(document.getElementById('movQuantidade').value),
+                tipo: document.querySelector('input[name="tipo"]:checked').value,
+                usuario: window.state.user?.email,
+                userId: window.state.user?.uid,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (movimento.tipo === 'saida') {
+                const estoqueAtual = window.state.currentStock.find(
+                    item => item.produto === movimento.produto
+                )?.estoque || 0;
+                
+                if (estoqueAtual < movimento.quantidade) {
+                    showToast(`⚠️ Estoque insuficiente! Disponível: ${estoqueAtual}`, 'error');
+                    return;
+                }
+            }
+
+            try {
+                const db = firebase.firestore();
+                await db.collection('movimentacoes').add(movimento);
+                
+                showToast('✅ Movimentação registrada com sucesso!');
+                
+                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
+                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
+                document.getElementById('movProduto').value = '';
+                document.getElementById('movQuantidade').value = '1';
+                
+                switchTab('historico');
+                
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                showToast('Erro ao salvar. Tente novamente.', 'error');
+            }
+        }
+
+        // ==================== FUNÇÕES DE REPARO ====================
+        async function repararEstoqueNegativo() {
+            showConfirmModal(
+                'Isso vai criar entradas para todos os produtos com estoque negativo. Deseja continuar?', 
+                async () => {
+                    try {
+                        showToast('🔍 Analisando estoque...', 'warning');
+                        
+                        const db = firebase.firestore();
+                        const produtosNegativos = window.state.currentStock.filter(item => item.estoque < 0);
+                        
+                        if (produtosNegativos.length === 0) {
+                            showToast('✅ Nenhum produto com estoque negativo encontrado!', 'success');
+                            return;
+                        }
+                        
+                        let totalReparos = 0;
+                        
+                        for (const item of produtosNegativos) {
+                            const quantidadeFaltante = Math.abs(item.estoque);
+                            
+                            const movimentoCorrecao = {
+                                data: new Date().toISOString().split('T')[0],
+                                hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                                operador: 'SISTEMA - REPARO',
+                                produto: item.produto,
+                                categoria: item.categoria,
+                                quantidade: quantidadeFaltante,
+                                tipo: 'entrada',
+                                usuario: window.state.user?.email,
+                                observacao: `REPARO - Estava em ${item.estoque}`,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+                            
+                            await db.collection('movimentacoes').add(movimentoCorrecao);
+                            totalReparos++;
+                        }
+                        
+                        showToast(`✅ Reparo concluído! ${totalReparos} produtos corrigidos.`, 'success');
+                        
+                    } catch (error) {
+                        console.error('Erro no reparo:', error);
+                        showToast('Erro ao reparar estoque', 'error');
+                    }
+                }
+            );
+        }
+
+        // ==================== RENDERIZAÇÃO DAS TELAS ====================
         function renderCurrentTab() {
             switch(window.state.activeTab) {
                 case 'dashboard': renderDashboard(); break;
@@ -1249,40 +1284,15 @@
             }
         }
 
-        // ==================== DASHBOARD ====================
         function renderDashboard() {
             const dashboard = document.getElementById('dashboard');
             
             const totalProdutos = window.state.currentStock.filter(p => p.estoque > 0).length;
-            const totalEntradas = window.state.movements.filter(m => {
-                try {
-                    const dataMov = m.data;
-                    const hoje = new Date();
-                    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
-                    const anoAtual = hoje.getFullYear();
-                    
-                    return dataMov && 
-                           dataMov.startsWith(`${anoAtual}-${mesAtual}`) && 
-                           m.tipo === 'entrada';
-                } catch { return false; }
-            }).reduce((acc, m) => acc + m.quantidade, 0);
-            
-            const totalSaidas = window.state.movements.filter(m => {
-                try {
-                    const dataMov = m.data;
-                    const hoje = new Date();
-                    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
-                    const anoAtual = hoje.getFullYear();
-                    
-                    return dataMov && 
-                           dataMov.startsWith(`${anoAtual}-${mesAtual}`) && 
-                           m.tipo === 'saida';
-                } catch { return false; }
-            }).reduce((acc, m) => acc + m.quantidade, 0);
-            
+            const totalEntradas = window.state.movements.filter(m => m.tipo === 'entrada').reduce((acc, m) => acc + m.quantidade, 0);
+            const totalSaidas = window.state.movements.filter(m => m.tipo === 'saida').reduce((acc, m) => acc + m.quantidade, 0);
             const pedidosPendentes = window.state.pedidos.filter(p => (p.status || 'pendente') === 'pendente').length;
-            
             const lowStockItems = window.state.currentStock.filter(item => item.estoque <= 10 && item.estoque > 0);
+            const negativos = window.state.currentStock.filter(item => item.estoque < 0);
 
             dashboard.innerHTML = `
                 <div class="card">
@@ -1303,7 +1313,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3>${totalEntradas}</h3>
-                                <p>Entradas este mês</p>
+                                <p>Total entradas</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -1312,7 +1322,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3>${totalSaidas}</h3>
-                                <p>Saídas este mês</p>
+                                <p>Total saídas</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -1325,6 +1335,18 @@
                             </div>
                         </div>
                     </div>
+
+                    ${negativos.length > 0 ? `
+                        <div style="background: #fef5e7; border-left: 4px solid var(--danger); padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                            <h3 style="color: var(--danger); margin-bottom: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> Estoque Negativo Detectado!
+                            </h3>
+                            <p>Existem ${negativos.length} produtos com estoque negativo.</p>
+                            <button id="btnRepararNegativos" class="btn btn-warning btn-sm">
+                                <i class="fas fa-wrench"></i> Reparar Automaticamente
+                            </button>
+                        </div>
+                    ` : ''}
 
                     <h3 class="card-title">Produtos com Baixo Estoque</h3>
                     ${lowStockItems.length === 0 ? `
@@ -1364,9 +1386,10 @@
                     `}
                 </div>
             `;
+
+            document.getElementById('btnRepararNegativos')?.addEventListener('click', repararEstoqueNegativo);
         }
 
-        // ==================== MOVIMENTAÇÃO (CORRIGIDO) ====================
         function renderMovimentacao() {
             const mov = document.getElementById('movimentacao');
             
@@ -1430,7 +1453,7 @@
                         
                         <div style="display: flex; gap: 10px;">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Salvar e Sincronizar
+                                <i class="fas fa-save"></i> Salvar
                             </button>
                             <button type="button" id="clearForm" class="btn btn-warning">
                                 <i class="fas fa-redo"></i> Limpar
@@ -1456,84 +1479,6 @@
             });
         }
 
-        // ==================== HANDLE SAVE MOVEMENT (CORRIGIDO - VERSÃO FINAL) ====================
-        async function handleSaveMovement(e) {
-            e.preventDefault();
-            
-            const movimento = {
-                data: document.getElementById('movData').value,
-                hora: document.getElementById('movHora').value,
-                operador: document.getElementById('movOperador').value,
-                produto: document.getElementById('movProduto').value,
-                categoria: document.getElementById('movCategoria').value,
-                quantidade: parseInt(document.getElementById('movQuantidade').value),
-                tipo: document.querySelector('input[name="tipo"]:checked').value,
-                usuario: window.state.user?.email,
-                userId: window.state.user?.uid,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // VALIDAÇÃO MAIS ROBUSTA PARA SAÍDAS
-            if (movimento.tipo === 'saida') {
-                // Calcular estoque atual considerando TODAS as movimentações existentes
-                const estoqueAtual = calcularEstoqueAtualProduto(movimento.produto);
-                
-                if (estoqueAtual < movimento.quantidade) {
-                    showToast(`⚠️ Estoque insuficiente! Disponível: ${estoqueAtual}`, 'error');
-                    return;
-                }
-            }
-
-            try {
-                const db = firebase.firestore();
-                
-                // USAR TRANSAÇÃO ATÔMICA para garantir consistência total
-                await db.runTransaction(async (transaction) => {
-                    // Buscar TODAS as movimentações deste produto para cálculo preciso
-                    const movementsQuery = await transaction.get(
-                        db.collection('movimentacoes')
-                          .where('produto', '==', movimento.produto)
-                    );
-                    
-                    // Calcular estoque dentro da transação
-                    let estoqueCalculado = 0;
-                    movementsQuery.docs.forEach(doc => {
-                        const mov = doc.data();
-                        if (mov.tipo === 'entrada') {
-                            estoqueCalculado += mov.quantidade;
-                        } else {
-                            estoqueCalculado -= mov.quantidade;
-                        }
-                    });
-                    
-                    // Validar novamente para saídas
-                    if (movimento.tipo === 'saida' && estoqueCalculado < movimento.quantidade) {
-                        throw new Error(`Estoque insuficiente. Disponível: ${estoqueCalculado}`);
-                    }
-                    
-                    // Adicionar a nova movimentação
-                    const newMovRef = db.collection('movimentacoes').doc();
-                    transaction.set(newMovRef, movimento);
-                });
-                
-                showToast('✅ Movimentação sincronizada com todas as máquinas!');
-                
-                // Limpar formulário
-                document.getElementById('movData').value = new Date().toISOString().split('T')[0];
-                document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
-                document.getElementById('movProduto').value = '';
-                document.getElementById('movQuantidade').value = '1';
-                
-                // Ir para histórico
-                switchTab('historico');
-                
-            } catch (error) {
-                console.error('Erro ao salvar:', error);
-                showToast(error.message || 'Erro ao sincronizar. Tente novamente.', 'error');
-            }
-        }
-
-        // ==================== HISTÓRICO ====================
         function renderHistorico() {
             const historico = document.getElementById('historico');
             
@@ -1684,7 +1629,6 @@
             });
         }
 
-        // ==================== ESTOQUE ====================
         function renderEstoque() {
             const estoque = document.getElementById('estoque');
             
@@ -1799,125 +1743,6 @@
                 window.state.filterCategory = e.target.value;
                 renderEstoque();
             });
-        }
-
-        // ==================== RELATÓRIOS ====================
-        function generateStockReport() {
-            window.state.reportType = 'estoque';
-            window.state.reportData = [...window.state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
-            renderRelatorios();
-        }
-
-        function generateEntriesReport() {
-            const startDate = window.state.reportStartDate;
-            const endDate = window.state.reportEndDate;
-            
-            const filtered = window.state.movements.filter(m => 
-                m.tipo === 'entrada' &&
-                m.data >= startDate &&
-                m.data <= endDate
-            ).sort((a, b) => a.data.localeCompare(b.data));
-            
-            window.state.reportType = 'entradas';
-            window.state.reportData = filtered;
-            renderRelatorios();
-        }
-
-        function generateExitsReport() {
-            const startDate = window.state.reportStartDate;
-            const endDate = window.state.reportEndDate;
-            
-            const filtered = window.state.movements.filter(m => 
-                m.tipo === 'saida' &&
-                m.data >= startDate &&
-                m.data <= endDate
-            ).sort((a, b) => a.data.localeCompare(b.data));
-            
-            window.state.reportType = 'saidas';
-            window.state.reportData = filtered;
-            renderRelatorios();
-        }
-
-        function generateReportPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFont('helvetica');
-            
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Porter - Controle de Estoque', 105, 20, { align: 'center' });
-            
-            let title = '';
-            let subtitle = '';
-            
-            switch(window.state.reportType) {
-                case 'estoque':
-                    title = 'Relatório de Estoque Atual';
-                    subtitle = `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`;
-                    break;
-                case 'entradas':
-                    title = 'Relatório de Entradas por Período';
-                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
-                    break;
-                case 'saidas':
-                    title = 'Relatório de Saídas por Período';
-                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
-                    break;
-            }
-            
-            doc.setTextColor(44, 62, 80);
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, 105, 55, { align: 'center' });
-            
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(127, 140, 141);
-            doc.text(subtitle, 105, 65, { align: 'center' });
-            
-            let tableData = [];
-            let headers = [];
-            
-            switch(window.state.reportType) {
-                case 'estoque':
-                    headers = ['Produto', 'Categoria', 'Estoque Atual'];
-                    tableData = window.state.reportData.map(item => [
-                        item.produto,
-                        item.categoria,
-                        item.estoque.toString()
-                    ]);
-                    break;
-                    
-                case 'entradas':
-                case 'saidas':
-                    headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
-                    tableData = window.state.reportData.map(item => [
-                        formatDate(item.data),
-                        item.produto,
-                        item.quantidade.toString(),
-                        item.operador || '-'
-                    ]);
-                    break;
-            }
-            
-            doc.autoTable({
-                head: [headers],
-                body: tableData,
-                startY: 75,
-                theme: 'grid',
-                styles: { font: 'helvetica', fontSize: 10, cellPadding: 8 },
-                headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [245, 245, 245] },
-                margin: { left: 15, right: 15 },
-            });
-            
-            const filename = `relatorio_${window.state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(filename);
-            showToast('PDF gerado com sucesso!');
         }
 
         function renderRelatorios() {
@@ -2095,6 +1920,122 @@
             document.getElementById('downloadReportPDF')?.addEventListener('click', generateReportPDF);
         }
 
+        function generateStockReport() {
+            window.state.reportType = 'estoque';
+            window.state.reportData = [...window.state.currentStock].sort((a, b) => a.produto.localeCompare(b.produto));
+            renderRelatorios();
+        }
+
+        function generateEntriesReport() {
+            const startDate = window.state.reportStartDate;
+            const endDate = window.state.reportEndDate;
+            
+            const filtered = window.state.movements.filter(m => 
+                m.tipo === 'entrada' &&
+                m.data >= startDate &&
+                m.data <= endDate
+            ).sort((a, b) => a.data.localeCompare(b.data));
+            
+            window.state.reportType = 'entradas';
+            window.state.reportData = filtered;
+            renderRelatorios();
+        }
+
+        function generateExitsReport() {
+            const startDate = window.state.reportStartDate;
+            const endDate = window.state.reportEndDate;
+            
+            const filtered = window.state.movements.filter(m => 
+                m.tipo === 'saida' &&
+                m.data >= startDate &&
+                m.data <= endDate
+            ).sort((a, b) => a.data.localeCompare(b.data));
+            
+            window.state.reportType = 'saidas';
+            window.state.reportData = filtered;
+            renderRelatorios();
+        }
+
+        function generateReportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Porter - Controle de Estoque', 105, 20, { align: 'center' });
+            
+            let title = '';
+            let subtitle = '';
+            
+            switch(window.state.reportType) {
+                case 'estoque':
+                    title = 'Relatório de Estoque Atual';
+                    subtitle = `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`;
+                    break;
+                case 'entradas':
+                    title = 'Relatório de Entradas por Período';
+                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
+                    break;
+                case 'saidas':
+                    title = 'Relatório de Saídas por Período';
+                    subtitle = `Período: ${formatDate(window.state.reportStartDate)} a ${formatDate(window.state.reportEndDate)}`;
+                    break;
+            }
+            
+            doc.setTextColor(44, 62, 80);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, 105, 55, { align: 'center' });
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(127, 140, 141);
+            doc.text(subtitle, 105, 65, { align: 'center' });
+            
+            let tableData = [];
+            let headers = [];
+            
+            switch(window.state.reportType) {
+                case 'estoque':
+                    headers = ['Produto', 'Categoria', 'Estoque Atual'];
+                    tableData = window.state.reportData.map(item => [
+                        item.produto,
+                        item.categoria,
+                        item.estoque.toString()
+                    ]);
+                    break;
+                    
+                case 'entradas':
+                case 'saidas':
+                    headers = ['Data', 'Produto', 'Quantidade', 'Responsável'];
+                    tableData = window.state.reportData.map(item => [
+                        formatDate(item.data),
+                        item.produto,
+                        item.quantidade.toString(),
+                        item.operador || '-'
+                    ]);
+                    break;
+            }
+            
+            doc.autoTable({
+                head: [headers],
+                body: tableData,
+                startY: 75,
+                theme: 'grid',
+                styles: { font: 'helvetica', fontSize: 10, cellPadding: 8 },
+                headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                margin: { left: 15, right: 15 },
+            });
+            
+            const filename = `relatorio_${window.state.reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+            showToast('PDF gerado com sucesso!');
+        }
+
         // ==================== FUNÇÕES PARA PEDIDOS ====================
         async function handleAlterarStatus(pedidoId, novoStatus) {
             try {
@@ -2104,9 +2045,7 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedBy: window.state.user?.email
                 });
-                
                 showToast(`✅ Status alterado para ${novoStatus}`, 'success');
-                
             } catch (error) {
                 console.error('Erro ao alterar status:', error);
                 showToast('Erro ao alterar status', 'error');
@@ -2118,9 +2057,7 @@
                 try {
                     const db = firebase.firestore();
                     await db.collection('pedidos').doc(pedidoId).delete();
-                    
                     showToast('🗑️ Pedido excluído com sucesso', 'warning');
-                    
                 } catch (error) {
                     console.error('Erro ao excluir pedido:', error);
                     showToast('Erro ao excluir pedido', 'error');
@@ -2434,9 +2371,10 @@
             }
         }
 
-        // Tornar funções globais para acesso no HTML
+        // Tornar funções globais
         window.handleAlterarStatus = handleAlterarStatus;
         window.handleExcluirPedido = handleExcluirPedido;
+        window.repararEstoqueNegativo = repararEstoqueNegativo;
 
         // Iniciar
         initializeApp();
