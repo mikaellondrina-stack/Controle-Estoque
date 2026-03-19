@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <title>Porter Controle de Estoque</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
 <!-- Favicon - Logo da Porter -->
@@ -968,7 +969,7 @@
             window.state.currentStock = Object.values(stockMap);
         }
 
-        // ==================== CARREGAR DADOS DO FIREBASE (AGORA SEM LIMIT) ====================
+        // ==================== CARREGAR DADOS DO FIREBASE (SEM LIMIT) ====================
         async function carregarDadosIniciaisFirebase() {
             const db = firebase.firestore();
             
@@ -990,7 +991,7 @@
                     window.state.produtos = produtosIniciais;
                 }
                 
-                // Movimentações - SEM LIMIT (carrega todas)
+                // Movimentações - SEM LIMIT
                 const movementsSnapshot = await db.collection('movimentacoes')
                     .orderBy('data', 'desc')
                     .orderBy('hora', 'desc')
@@ -1229,7 +1230,7 @@
             }
         };
 
-        // ==================== FUNÇÕES DE REPARO ====================
+        // ==================== FUNÇÕES DE REPARO (NEGATIVOS) ====================
         window.repararEstoqueNegativo = async function() {
             showConfirmModal(
                 'Isso vai criar entradas para todos os produtos com estoque negativo. Deseja continuar?', 
