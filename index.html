@@ -821,6 +821,20 @@
             { nome: "Sabonete líquido", categoria: "Higiene" }
         ];
 
+        // ==================== VALORES CORRETOS DO ESTOQUE (FORNECIDOS PELO USUÁRIO) ====================
+        const ESTOQUE_CORRETO = {
+            "Papel toalha": 13,
+            "Saco de lixo": 88,
+            "Pano": 5,
+            "Papel higiênico": 3,
+            "Sabonete líquido": 1,
+            "Filtro de café": 6,
+            "Café": 0,
+            "Açúcar": 0,
+            "Desinfetante": 0,
+            "Detergente": 0
+        };
+
         // ==================== ESTADO GLOBAL ====================
         window.state = {
             user: null,
@@ -968,11 +982,12 @@
             window.state.currentStock = Object.values(stockMap);
         }
 
-        // ==================== CARREGAR DADOS DO FIREBASE ====================
+        // ==================== CARREGAR DADOS DO FIREBASE (AGORA SEM LIMIT) ====================
         async function carregarDadosIniciaisFirebase() {
             const db = firebase.firestore();
             
             try {
+                // Produtos
                 const produtosSnapshot = await db.collection('produtos').get();
                 if (!produtosSnapshot.empty) {
                     window.state.produtos = produtosSnapshot.docs.map(doc => ({
@@ -989,10 +1004,10 @@
                     window.state.produtos = produtosIniciais;
                 }
                 
+                // Movimentações - SEM LIMIT (carrega todas)
                 const movementsSnapshot = await db.collection('movimentacoes')
                     .orderBy('data', 'desc')
                     .orderBy('hora', 'desc')
-                    .limit(100)
                     .get();
                 
                 if (!movementsSnapshot.empty) {
@@ -1000,11 +1015,13 @@
                         id: doc.id,
                         ...doc.data()
                     }));
+                } else {
+                    window.state.movements = [];
                 }
                 
+                // Pedidos - SEM LIMIT
                 const pedidosSnapshot = await db.collection('pedidos')
                     .orderBy('data', 'desc')
-                    .limit(100)
                     .get();
                 
                 if (!pedidosSnapshot.empty) {
@@ -1012,10 +1029,12 @@
                         id: doc.id,
                         ...doc.data()
                     }));
+                } else {
+                    window.state.pedidos = [];
                 }
                 
                 recalcularEstoque();
-                console.log('✅ Dados carregados do Firebase');
+                console.log('✅ Dados carregados do Firebase (sem limite)');
                 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
@@ -1113,6 +1132,74 @@
             });
         }
 
+        // ==================== CORREÇÃO MANUAL DO ESTOQUE (ADMIN) ====================
+        async function corrigirEstoqueParaValoresAlvo() {
+            if (!window.state.isAdmin) {
+                showToast('Apenas administradores podem executar esta ação.', 'error');
+                return;
+            }
+
+            showConfirmModal('Isso criará movimentações de correção para ajustar o estoque aos valores corretos (fornecidos). Deseja continuar?', async () => {
+                try {
+                    showToast('🔍 Calculando diferenças...', 'warning');
+                    
+                    const db = firebase.firestore();
+                    const batch = db.batch();
+                    const now = new Date();
+                    const dataHoje = now.toISOString().split('T')[0];
+                    const horaAgora = now.toTimeString().split(' ')[0].substring(0,5);
+                    
+                    let correcoesCriadas = 0;
+                    
+                    for (const [produtoNome, quantidadeAlvo] of Object.entries(ESTOQUE_CORRETO)) {
+                        // Encontrar o produto no estado para obter a categoria
+                        const produtoInfo = window.state.produtos.find(p => p.nome === produtoNome);
+                        if (!produtoInfo) {
+                            console.warn(`Produto ${produtoNome} não encontrado na lista de produtos. Ignorando.`);
+                            continue;
+                        }
+                        
+                        const itemAtual = window.state.currentStock.find(i => i.produto === produtoNome);
+                        const quantidadeAtual = itemAtual ? itemAtual.estoque : 0;
+                        const diff = quantidadeAlvo - quantidadeAtual;
+                        
+                        if (diff === 0) continue; // já está correto
+                        
+                        const tipo = diff > 0 ? 'entrada' : 'saida';
+                        const quantidade = Math.abs(diff);
+                        
+                        const movimento = {
+                            data: dataHoje,
+                            hora: horaAgora,
+                            operador: 'SISTEMA - CORREÇÃO MANUAL',
+                            produto: produtoNome,
+                            categoria: produtoInfo.categoria,
+                            quantidade: quantidade,
+                            tipo: tipo,
+                            usuario: window.state.user?.email,
+                            observacao: `CORREÇÃO MANUAL: estoque era ${quantidadeAtual}, alvo ${quantidadeAlvo}`,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        
+                        const docRef = db.collection('movimentacoes').doc();
+                        batch.set(docRef, movimento);
+                        correcoesCriadas++;
+                    }
+                    
+                    if (correcoesCriadas > 0) {
+                        await batch.commit();
+                        showToast(`✅ Correção concluída! ${correcoesCriadas} movimentações criadas.`, 'success');
+                    } else {
+                        showToast('✅ Estoque já está correto! Nenhuma movimentação necessária.', 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro na correção:', error);
+                    showToast('Erro ao corrigir estoque', 'error');
+                }
+            });
+        }
+
         // ==================== LOGIN ====================
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1177,8 +1264,8 @@
             document.getElementById('loginForm').reset();
         });
 
-        // ==================== HANDLE SAVE MOVEMENT (VERSÃO FINAL CORRIGIDA) ====================
-        async function handleSaveMovement(e) {
+        // ==================== HANDLE SAVE MOVEMENT (AGORA COM ONSBMIT DIRETO NO HTML) ====================
+        window.handleSaveMovement = async function(e) {
             e.preventDefault();
             
             const movimento = {
@@ -1222,10 +1309,10 @@
                 console.error('Erro ao salvar:', error);
                 showToast('Erro ao salvar. Tente novamente.', 'error');
             }
-        }
+        };
 
         // ==================== FUNÇÕES DE REPARO ====================
-        async function repararEstoqueNegativo() {
+        window.repararEstoqueNegativo = async function() {
             showConfirmModal(
                 'Isso vai criar entradas para todos os produtos com estoque negativo. Deseja continuar?', 
                 async () => {
@@ -1270,7 +1357,7 @@
                     }
                 }
             );
-        }
+        };
 
         // ==================== RENDERIZAÇÃO DAS TELAS ====================
         function renderCurrentTab() {
@@ -1348,6 +1435,18 @@
                         </div>
                     ` : ''}
 
+                    ${window.state.isAdmin ? `
+                        <div style="background: #e8f4fd; border-left: 4px solid var(--secondary); padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                            <h3 style="color: var(--secondary); margin-bottom: 10px;">
+                                <i class="fas fa-tools"></i> Ferramentas Administrativas
+                            </h3>
+                            <p>Clique no botão abaixo para ajustar o estoque aos valores corretos fornecidos (Papel toalha=13, Saco lixo=88, etc.).</p>
+                            <button id="btnCorrigirEstoque" class="btn btn-primary btn-sm">
+                                <i class="fas fa-sync-alt"></i> Corrigir Estoque Agora
+                            </button>
+                        </div>
+                    ` : ''}
+
                     <h3 class="card-title">Produtos com Baixo Estoque</h3>
                     ${lowStockItems.length === 0 ? `
                         <div class="empty-state">
@@ -1388,6 +1487,7 @@
             `;
 
             document.getElementById('btnRepararNegativos')?.addEventListener('click', repararEstoqueNegativo);
+            document.getElementById('btnCorrigirEstoque')?.addEventListener('click', corrigirEstoqueParaValoresAlvo);
         }
 
         function renderMovimentacao() {
@@ -1396,7 +1496,7 @@
             mov.innerHTML = `
                 <div class="card">
                     <h2 class="card-title">Nova Movimentação de Estoque</h2>
-                    <form id="movementForm">
+                    <form id="movementForm" onsubmit="handleSaveMovement(event)">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Data</label>
@@ -1463,7 +1563,6 @@
                 </div>
             `;
 
-            document.getElementById('movementForm').addEventListener('submit', handleSaveMovement);
             document.getElementById('clearForm').addEventListener('click', () => {
                 document.getElementById('movData').value = new Date().toISOString().split('T')[0];
                 document.getElementById('movHora').value = new Date().toTimeString().split(' ')[0].substring(0,5);
@@ -2037,7 +2136,7 @@
         }
 
         // ==================== FUNÇÕES PARA PEDIDOS ====================
-        async function handleAlterarStatus(pedidoId, novoStatus) {
+        window.handleAlterarStatus = async function(pedidoId, novoStatus) {
             try {
                 const db = firebase.firestore();
                 await db.collection('pedidos').doc(pedidoId).update({
@@ -2050,9 +2149,9 @@
                 console.error('Erro ao alterar status:', error);
                 showToast('Erro ao alterar status', 'error');
             }
-        }
+        };
 
-        async function handleExcluirPedido(pedidoId) {
+        window.handleExcluirPedido = async function(pedidoId) {
             showConfirmModal('Tem certeza que deseja excluir este pedido?', async () => {
                 try {
                     const db = firebase.firestore();
@@ -2063,9 +2162,9 @@
                     showToast('Erro ao excluir pedido', 'error');
                 }
             });
-        }
+        };
 
-        async function handleEnviarPedido(e) {
+        window.handleEnviarPedido = async function(e) {
             e.preventDefault();
             
             const produto = document.getElementById('pedidoProduto').value;
@@ -2111,7 +2210,7 @@
                 console.error('Erro ao enviar pedido:', error);
                 showToast('Erro ao enviar pedido. Tente novamente.', 'error');
             }
-        }
+        };
 
         function renderPedidos() {
             const pedidosDiv = document.getElementById('pedidos');
@@ -2137,7 +2236,7 @@
                     </h2>
                     
                     <div class="pedido-form">
-                        <form id="pedidoForm">
+                        <form id="pedidoForm" onsubmit="handleEnviarPedido(event)">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Produto</label>
@@ -2249,8 +2348,6 @@
                 </div>
             `;
 
-            document.getElementById('pedidoForm')?.addEventListener('submit', handleEnviarPedido);
-            
             document.getElementById('searchPedidos')?.addEventListener('input', (e) => {
                 window.state.searchPedidos = e.target.value;
                 renderPedidos();
@@ -2370,11 +2467,6 @@
                 }, 1500);
             }
         }
-
-        // Tornar funções globais
-        window.handleAlterarStatus = handleAlterarStatus;
-        window.handleExcluirPedido = handleExcluirPedido;
-        window.repararEstoqueNegativo = repararEstoqueNegativo;
 
         // Iniciar
         initializeApp();
