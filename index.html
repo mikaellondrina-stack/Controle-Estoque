@@ -820,7 +820,7 @@
             { nome: "Desinfetante", categoria: "Limpeza" },
             { nome: "Detergente", categoria: "Limpeza" },
             { nome: "Sabonete líquido", categoria: "Higiene" },
-            { nome: "Álcool", categoria: "Limpeza" }   // <-- ITEM ADICIONADO
+            { nome: "Álcool", categoria: "Limpeza" }
         ];
 
         // ==================== ESTADO GLOBAL ====================
@@ -970,26 +970,46 @@
             window.state.currentStock = Object.values(stockMap);
         }
 
-        // ==================== CARREGAR DADOS DO FIREBASE (SEM LIMIT) ====================
+        // ==================== CARREGAR DADOS DO FIREBASE + ADICIONAR PRODUTOS FALTANTES ====================
         async function carregarDadosIniciaisFirebase() {
             const db = firebase.firestore();
             
             try {
                 // Produtos
                 const produtosSnapshot = await db.collection('produtos').get();
+                let produtosExistentes = [];
+                
                 if (!produtosSnapshot.empty) {
-                    window.state.produtos = produtosSnapshot.docs.map(doc => ({
+                    produtosExistentes = produtosSnapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
                     }));
-                } else {
+                }
+                
+                // Verificar produtos faltantes comparando com lista inicial
+                const nomesExistentes = produtosExistentes.map(p => p.nome);
+                const produtosFaltantes = produtosIniciais.filter(p => !nomesExistentes.includes(p.nome));
+                
+                if (produtosFaltantes.length > 0) {
+                    console.log(`Adicionando ${produtosFaltantes.length} produtos faltantes:`, produtosFaltantes.map(p => p.nome));
+                    
                     const batch = db.batch();
-                    produtosIniciais.forEach(produto => {
+                    produtosFaltantes.forEach(produto => {
                         const docRef = db.collection('produtos').doc();
                         batch.set(docRef, produto);
                     });
                     await batch.commit();
-                    window.state.produtos = produtosIniciais;
+                    
+                    // Recarregar lista de produtos após adição
+                    const novaSnapshot = await db.collection('produtos').get();
+                    window.state.produtos = novaSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    showToast(`✅ ${produtosFaltantes.length} novo(s) produto(s) adicionado(s): ${produtosFaltantes.map(p => p.nome).join(', ')}`, 'success');
+                } else {
+                    window.state.produtos = produtosExistentes;
                 }
                 
                 // Movimentações - SEM LIMIT
